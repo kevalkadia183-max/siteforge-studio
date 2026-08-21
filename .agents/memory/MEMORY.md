@@ -1,0 +1,15 @@
+- [Offline-ready site exports](offline-ready-site-exports.md) — client ZIPs must run without external runtime assets; bundle assets or use local-safe alternatives.
+- [Orval Zod integer compatibility](orval-zod-integer-compatibility.md) — use OpenAPI number plus server integer checks; generated zod.int is incompatible here.
+- [Receptionist policy boundary](receptionist-policy-boundary.md) — canonical typed intents authorize replies; free-form facts provide bounded content only.
+- [Gmail reconciliation locks](gmail-reconciliation-locks.md) — ambiguous draft reconciliation must fail closed; auto-expiry can reintroduce duplicate dispatch races.
+- [Escalation status transitions](escalation-status-transitions.md) — owner resolution must reject stale views; inbound activity may reopen closed threads but never clear escalations.
+- [One-time secret submission](one-time-secret-submission.md) — attach secret headers at submit time; mutable hook request options can send stale values.
+- [Receptionist provisioning authorization](receptionist-provisioning-authorization.md) — signed-in owners provision directly; the setup key is only a legacy anonymous fallback.
+- [Retell webhook verification](retell-webhook-verification.md) — verify Retell with the exact raw request body and the dedicated webhook-enabled API key, not the connector.
+- [Canonical website identity](canonical-website-identity.md) — DB row id/name override embedded project source; duplicated sources must never retain the original identity.
+- [Development schema readiness](development-schema-readiness.md) — authenticated Studio tests can fail before UI render when the dev database only has part of the current schema.
+- [Standalone API test bundles](standalone-api-test-bundles.md) — full-app Esbuild tests must include Pino’s companion workers or can fail after all assertions pass.
+- [Sandbox-safe preview widgets](sandbox-safe-chat-storage.md) — preview sandboxes may deny storage and native form submission; widgets must degrade safely without weakening isolation.
+- [Browser concurrency test isolation](browser-concurrency-test-isolation.md) — synchronize on mutations and isolate identities/output when parallel sessions share one environment.
+- [PostgreSQL text type migrations](postgres-text-type-migrations.md) — drop incompatible defaults and use guarded USING casts; schema push cannot infer safe text conversions.
+- [Server-managed project metadata](server-managed-project-metadata.md) — editable project APIs must round-trip protected metadata while server writes preserve its authoritative value.

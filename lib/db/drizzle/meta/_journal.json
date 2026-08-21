@@ -1,0 +1,83 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1787238817568,
+      "tag": "0000_panoramic_toro",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787239025456,
+      "tag": "0001_receptionist_pilot",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787248719172,
+      "tag": "0002_white_shiva",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787255106595,
+      "tag": "0003_siteforge_accounts_websites",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787295353241,
+      "tag": "0004_lead_acquisition",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787296548956,
+      "tag": "0005_lead_acquisition_corrections",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787400000000,
+      "tag": "0006_prospect_sites",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787305911427,
+      "tag": "0007_lead_outreach",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787306911427,
+      "tag": "0008_lead_outreach_reconciliation",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787307911427,
+      "tag": "0009_backfill_outreach_optout_suppressions",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787338926530,
+      "tag": "0010_provider_integrations",
+      "breakpoints": true
+    }
+  ]
+}

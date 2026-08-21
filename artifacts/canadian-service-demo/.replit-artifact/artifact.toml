@@ -1,0 +1,7 @@
+kind = "web"
+previewPath = "/northline-retired/"
+title = "Retired Northline Demo"
+description = "This legacy demo has been removed. SiteForge Studio is the active website product."
+version = "1.0.0"
+id = "artifacts/canadian-service-demo"
+router = "path"

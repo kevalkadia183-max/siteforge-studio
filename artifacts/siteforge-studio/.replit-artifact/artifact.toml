@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SiteForge Studio"
+description = "A mobile-first business website generator for freelancers to create polished client landing pages, edit essential business details, preview responsive layouts, and download separate website files with launch guidance."
+version = "1.0.0"
+id = "artifacts/siteforge-studio"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22086
+
+[services.development]
+run = "pnpm --filter @workspace/siteforge-studio run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/siteforge-studio", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/siteforge-studio/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22086"
+BASE_PATH = "/"

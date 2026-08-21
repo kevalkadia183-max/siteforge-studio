@@ -1,0 +1,231 @@
+Do NOT modify, refactor, or add any code.
+
+I want a complete audit of what has actually been built in SiteForge so far.
+
+Give me a clear feature-by-feature implementation report.
+
+For every feature, classify it as exactly one of:
+
+* ✅ Fully implemented and working
+* 🟡 Partially implemented
+* 🔵 UI only / frontend mock
+* 🔴 Not implemented
+* ⚠️ Implemented but requires external configuration
+
+Cover ALL major areas of the system, including:
+
+1. Website Builder
+
+* Visual/page builder
+* Drag and drop
+* Sections
+* Components/blocks
+* Text editing
+* Images
+* Buttons
+* Forms
+* Columns/grids
+* Responsive design
+* Mobile editing
+* Styling
+* Spacing
+* Typography
+* Colors
+* Animations
+* Preview
+* Undo/redo
+* Autosave
+
+2. CMS
+
+* Pages
+* Posts/blog
+* Categories
+* Tags
+* Media library
+* Navigation/menu
+* Custom content
+* Draft/publish
+* Revisions
+* Search
+* Website settings
+
+3. Templates & Themes
+
+* Templates
+* Theme system
+* Header
+* Footer
+* Global styles
+* Reusable sections/components
+* Custom themes
+
+4. Website Management
+
+* Create website
+* Delete website
+* Duplicate website
+* Website settings
+* Domain configuration
+* Preview
+* Publish
+* Website isolation
+
+5. AI Website Features
+
+* AI website generation
+* AI page generation
+* AI content generation
+* AI redesign
+* AI image generation
+* AI SEO
+* AI assistant
+
+Clearly state which AI features are real and which are placeholders.
+
+6. AI Business Employee
+
+* Website AI chat
+* Phone AI receptionist
+* Retell AI integration
+* Email reading
+* Email drafting
+* Email replies
+* Calendar integration
+* Appointment booking
+* Appointment rescheduling
+* Appointment cancellation
+* Lead capture
+* CRM
+* Human handoff
+* Call transcripts
+* Call summaries
+* AI action permissions
+* Audit logs
+
+Clearly distinguish what is actually implemented from what is only planned.
+
+7. Integrations
+
+List every integration currently implemented or partially implemented, including:
+
+* Retell AI
+* Gmail/Google Workspace
+* Google Calendar
+* Other APIs
+* Webhooks
+* Authentication providers
+* Storage providers
+
+For each integration, explain whether it is:
+
+* Connected and working
+* Code exists but credentials/configuration are missing
+* UI only
+* Not implemented
+
+8. Export & Self-Hosting
+
+This is extremely important.
+
+Check whether SiteForge currently supports:
+
+* Export website source code
+* Download ZIP
+* Export database/content
+* Export assets
+* Export configuration
+* GitHub export
+* Docker deployment
+* Self-hosted deployment
+* Running independently from SiteForge
+* Running without SiteForge APIs
+* Running without SiteForge database
+* Running without SiteForge authentication
+
+Do NOT assume these features exist. Verify the actual code.
+
+9. Authentication & Security
+
+* User authentication
+* Website ownership
+* Multi-user support
+* Roles
+* Permissions
+* Secret management
+* API security
+* Tenant isolation
+* Website isolation
+
+10. Database
+
+Tell me what database is actually being used and list the important models/tables/entities that currently exist.
+
+11. Admin/Dashboard
+
+List the current dashboard pages and what each one actually does.
+
+12. Deployment
+
+Explain:
+
+* Current stack
+* Frontend
+* Backend
+* Database
+* Hosting
+* Environment variables
+* Build process
+* Deployment process
+
+13. Testing
+
+Tell me:
+
+* What automated tests exist
+* What integration tests exist
+* What was manually tested
+* What is currently failing
+* Any known bugs
+
+14. CURRENT STATE SUMMARY
+
+At the end provide:
+
+Fully Working
+
+List everything that genuinely works end-to-end.
+
+Partially Working
+
+List everything that has implementation but isn’t complete.
+
+UI/Mock Only
+
+List features that look implemented but don’t actually have backend functionality.
+
+Not Built
+
+List important features that don’t exist yet.
+
+Requires External Setup
+
+List features that need API keys, OAuth, phone numbers, domains, etc.
+
+Biggest Gaps
+
+Identify the 10 most important missing pieces.
+
+Recommended Next 5 Tasks
+
+Give me the five highest-priority development tasks to turn SiteForge into the product we are building.
+
+IMPORTANT:
+
+Do not make assumptions from the task description.
+
+Inspect the actual current implementation/code/database/routes/components and report what exists right now.
+
+Do not change anything.
+
+Be factual and concise, but cover the entire system.

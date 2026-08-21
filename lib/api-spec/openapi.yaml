@@ -1,0 +1,5485 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: previews
+    description: Temporary client preview operations
+  - name: receptionist
+    description: AI receptionist management (owner-authenticated)
+  - name: widget
+    description: Public widget endpoints (no auth required)
+  - name: accounts
+    description: Authenticated account management (Clerk session)
+  - name: websites
+    description: Authenticated website management (Clerk session)
+  - name: lead-acquisition
+    description: Lead acquisition module (owner-scoped, Clerk session)
+  - name: providers
+    description: Provider settings and audit (owner-scoped, Clerk session)
+  - name: leads-consent
+    description: Lead channel consent management (owner-scoped, Clerk session)
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /previews:
+    post:
+      operationId: publishPreview
+      tags: [previews]
+      summary: Publish a temporary client preview
+      parameters:
+        - $ref: "#/components/parameters/EditorKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreviewPublishRequest"
+      responses:
+        "201":
+          description: Preview published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreviewPublication"
+        "400":
+          description: Invalid preview payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: Preview payload too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Preview publishing quota exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Preview capacity temporarily full
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Preview service error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /previews/{previewId}/refresh:
+    post:
+      operationId: refreshPreview
+      tags: [previews]
+      summary: Republish the latest project and rotate its preview link
+      parameters:
+        - $ref: "#/components/parameters/PreviewId"
+        - $ref: "#/components/parameters/EditorKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreviewRefreshRequest"
+      responses:
+        "200":
+          description: Preview refreshed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreviewPublication"
+        "400":
+          description: Invalid preview payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: Preview payload too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Preview not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Preview service error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /previews/{previewId}:
+    delete:
+      operationId: revokePreview
+      tags: [previews]
+      summary: Revoke a temporary client preview
+      parameters:
+        - $ref: "#/components/parameters/PreviewId"
+        - $ref: "#/components/parameters/EditorKey"
+      responses:
+        "204":
+          description: Preview revoked
+        "400":
+          description: Invalid preview identifier or editor key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Preview not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Preview service error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Receptionist: Owner Endpoints ───────────────────────────────────────
+  /receptionist:
+    post:
+      operationId: createReceptionist
+      tags: [receptionist]
+      summary: Create a receptionist for the signed-in owner or legacy pilot
+      parameters:
+        - $ref: "#/components/parameters/SetupKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceptionistInput"
+      responses:
+        "201":
+          description: Receptionist created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceptionistCreated"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Sign-in required or invalid pilot setup key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Pilot receptionist already provisioned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Pilot setup key is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/settings:
+    get:
+      operationId: getReceptionistSettings
+      tags: [receptionist]
+      summary: Get receptionist settings
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/OwnerKey"
+      responses:
+        "200":
+          description: Settings retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceptionistSettings"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Receptionist not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateReceptionistSettings
+      tags: [receptionist]
+      summary: Update receptionist settings
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/OwnerKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceptionistSettingsUpdate"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceptionistSettings"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Receptionist not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/conversations:
+    get:
+      operationId: listReceptionistConversations
+      tags: [receptionist]
+      summary: List conversations for this receptionist
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/OwnerKey"
+      responses:
+        "200":
+          description: Conversation list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationPage"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Receptionist not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/conversations/{conversationId}:
+    get:
+      operationId: getConversation
+      tags: [receptionist]
+      summary: Get a conversation with its messages
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/ConversationId"
+        - $ref: "#/components/parameters/OwnerKey"
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationDetail"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/conversations/{conversationId}/reply:
+    post:
+      operationId: ownerReply
+      tags: [receptionist]
+      summary: Send an owner reply into a conversation
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/ConversationId"
+        - $ref: "#/components/parameters/OwnerKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OwnerReplyInput"
+      responses:
+        "201":
+          description: Reply sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/conversations/{conversationId}/status:
+    patch:
+      operationId: updateConversationStatus
+      tags: [receptionist]
+      summary: Resolve or reopen a conversation
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/ConversationId"
+        - $ref: "#/components/parameters/OwnerKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationStatusUpdate"
+      responses:
+        "200":
+          description: Conversation status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationStatus"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conversation status changed before this update
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/gmail/sync:
+    post:
+      operationId: syncGmail
+      tags: [receptionist]
+      summary: Sync Gmail inbox and create AI reply suggestions
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/OwnerKey"
+      responses:
+        "200":
+          description: Gmail sync result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GmailSyncResult"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Receptionist not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Gmail connector error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/gmail/messages/{messageId}/approve:
+    post:
+      operationId: approveEmailDraft
+      tags: [receptionist]
+      summary: Approve an AI email draft and create a Gmail draft
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/MessageId"
+        - $ref: "#/components/parameters/OwnerKey"
+      responses:
+        "200":
+          description: Draft created in Gmail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailApprovalResult"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Message not found or not pending
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Gmail connector error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/gmail/messages/{messageId}/recover:
+    post:
+      operationId: recoverEmailDraft
+      tags: [receptionist]
+      summary: Safely recover an interrupted Gmail draft reconciliation
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/MessageId"
+        - $ref: "#/components/parameters/OwnerKey"
+      responses:
+        "200":
+          description: Existing Gmail draft recovered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailApprovalResult"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Recovery is unavailable, still running, or ready for approval retry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Gmail connector error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/gmail/messages/{messageId}/reject:
+    post:
+      operationId: rejectEmailDraft
+      tags: [receptionist]
+      summary: Reject an AI email draft
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/MessageId"
+        - $ref: "#/components/parameters/OwnerKey"
+      responses:
+        "200":
+          description: Draft rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailApprovalResult"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Message not found or not pending
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /receptionist/{receptionistId}/retell/sync:
+    post:
+      operationId: syncRetellCalls
+      tags: [receptionist]
+      summary: Sync Retell call history
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/OwnerKey"
+      responses:
+        "200":
+          description: Retell sync result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetellSyncResult"
+        "401":
+          description: Invalid owner key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Receptionist not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Retell connector error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Accounts: Cookie-authenticated Clerk endpoints ──────────────────────
+  /account:
+    get:
+      operationId: getAccount
+      tags: [accounts]
+      summary: Get the current authenticated account
+      responses:
+        "200":
+          description: Account info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountInfo"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Websites ─────────────────────────────────────────────────────────────
+  /websites:
+    get:
+      operationId: listWebsites
+      tags: [websites]
+      summary: List all websites owned by the authenticated user
+      responses:
+        "200":
+          description: Website list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteList"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createWebsite
+      tags: [websites]
+      summary: Create a new website for the authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebsiteInput"
+      responses:
+        "201":
+          description: Website created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /websites/import:
+    post:
+      operationId: importWebsites
+      tags: [websites]
+      summary: Batch import websites (idempotent per owner+id)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebsiteImportRequest"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteImportResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /websites/{websiteId}:
+    get:
+      operationId: getWebsite
+      tags: [websites]
+      summary: Get a single website by ID
+      parameters:
+        - $ref: "#/components/parameters/WebsiteId"
+      responses:
+        "200":
+          description: Website record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteRecord"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Website not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: saveWebsite
+      tags: [websites]
+      summary: Full save of a website (requires expectedRevision for conflict detection)
+      parameters:
+        - $ref: "#/components/parameters/WebsiteId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebsiteSave"
+      responses:
+        "200":
+          description: Website saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Website not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Stale revision conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteConflict"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: renameWebsite
+      tags: [websites]
+      summary: Rename a website (name only, requires expectedRevision for conflict detection)
+      parameters:
+        - $ref: "#/components/parameters/WebsiteId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebsiteRename"
+      responses:
+        "200":
+          description: Website renamed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Website not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Revision conflict — another save completed after the client last read this website
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteConflict"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteWebsite
+      tags: [websites]
+      summary: Delete a website
+      parameters:
+        - $ref: "#/components/parameters/WebsiteId"
+      responses:
+        "204":
+          description: Website deleted
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Website not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /websites/{websiteId}/duplicate:
+    post:
+      operationId: duplicateWebsite
+      tags: [websites]
+      summary: Duplicate a website (gets new server id, credentials stripped)
+      parameters:
+        - $ref: "#/components/parameters/WebsiteId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebsiteDuplicate"
+      responses:
+        "201":
+          description: Website duplicated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Website not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Widget: Public Endpoints ─────────────────────────────────────────────
+  /widget/{receptionistId}/config:
+    get:
+      operationId: getWidgetConfig
+      tags: [widget]
+      summary: Get public widget configuration (safe fields only)
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+      responses:
+        "200":
+          description: Widget config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidgetConfig"
+        "404":
+          description: Receptionist not found or disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /widget/{receptionistId}/chat:
+    post:
+      operationId: widgetChat
+      tags: [widget]
+      summary: Send a chat message to the AI receptionist
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WidgetChatInput"
+      responses:
+        "200":
+          description: AI reply
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidgetReply"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Receptionist not found or disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: AI service temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /widget/{receptionistId}/conversations/{conversationId}/messages:
+    get:
+      operationId: getWidgetConversationMessages
+      tags: [widget]
+      summary: Get messages for the current public chat session
+      parameters:
+        - $ref: "#/components/parameters/ReceptionistId"
+        - $ref: "#/components/parameters/ConversationId"
+        - $ref: "#/components/parameters/SessionToken"
+      responses:
+        "200":
+          description: Current chat messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidgetConversationMessages"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Chat session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Provider Settings ───────────────────────────────────────────────────
+  /provider-settings:
+    get:
+      operationId: getProviderSettings
+      tags: [providers]
+      summary: Get provider settings overview for all capabilities
+      responses:
+        "200":
+          description: Provider settings overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderSettingsOverview"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /provider-settings/{capability}:
+    patch:
+      operationId: updateProviderSetting
+      tags: [providers]
+      summary: Update provider setting for a capability
+      parameters:
+        - in: path
+          name: capability
+          required: true
+          schema:
+            type: string
+            enum: [discovery, website_analysis, image, email, whatsapp]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderSettingUpdate"
+      responses:
+        "200":
+          description: Updated provider capability setting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderCapabilitySetting"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /provider-audit:
+    get:
+      operationId: listProviderAuditEvents
+      tags: [providers]
+      summary: List provider audit events
+      parameters:
+        - in: query
+          name: capability
+          required: false
+          schema:
+            type: string
+            enum: [discovery, website_analysis, image, email, whatsapp]
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        "200":
+          description: Provider audit event list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderAuditList"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Lead Acquisition ────────────────────────────────────────────────────
+  /lead-acquisition/config:
+    get:
+      operationId: getLeadAcquisitionConfig
+      tags: [lead-acquisition]
+      summary: Get lead acquisition module availability and configuration
+      responses:
+        "200":
+          description: Module config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadAcquisitionConfig"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /lead-acquisition/dashboard:
+    get:
+      operationId: getLeadAcquisitionDashboard
+      tags: [lead-acquisition]
+      summary: Get dashboard stats for the authenticated owner
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadDashboard"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /lead-acquisition/discovery/search:
+    post:
+      operationId: searchBusinesses
+      tags: [lead-acquisition]
+      summary: Search for businesses via the configured discovery provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BusinessDiscoverySearchInput"
+      responses:
+        "200":
+          description: Business discovery search result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessDiscoverySearchResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RateLimitError"
+        "503":
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderUnavailableError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads:
+    get:
+      operationId: listLeads
+      tags: [lead-acquisition]
+      summary: List leads for the authenticated owner with optional filters
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+            maxLength: 200
+        - in: query
+          name: pipelineStatus
+          schema:
+            type: string
+            enum: [new, contacted, qualified, proposal, won, lost, archived]
+        - in: query
+          name: websiteStatus
+          schema:
+            type: string
+            enum: [unknown, has_website, no_website, placeholder, outdated]
+        - in: query
+          name: suppressed
+          schema:
+            type: string
+            enum: ["true", "false"]
+        - in: query
+          name: limit
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Lead list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadList"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createLead
+      tags: [lead-acquisition]
+      summary: Manually create a lead with duplicate detection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadInput"
+      responses:
+        "201":
+          description: Lead created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Duplicate lead detected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadDuplicateConflict"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/import:
+    post:
+      operationId: importLeads
+      tags: [lead-acquisition]
+      summary: Bulk import leads (max 100); per-item created/skipped with duplicate reference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadImportRequest"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadImportResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}:
+    get:
+      operationId: getLead
+      tags: [lead-acquisition]
+      summary: Get a single lead with score reasons, source records, and activity history
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      responses:
+        "200":
+          description: Lead detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadDetail"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateLead
+      tags: [lead-acquisition]
+      summary: Update contact/business/status/website fields; recomputes score when relevant facts change
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadUpdate"
+      responses:
+        "200":
+          description: Lead updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/score:
+    post:
+      operationId: scoreLeadNow
+      tags: [lead-acquisition]
+      summary: Trigger score recalculation for a lead
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      responses:
+        "200":
+          description: Score recalculated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadRecord"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/consents/whatsapp:
+    get:
+      operationId: getLeadWhatsAppConsent
+      tags: [leads-consent]
+      summary: Get WhatsApp consent status for a lead
+      parameters:
+        - in: path
+          name: leadId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lead WhatsApp consent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadChannelConsent"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateLeadWhatsAppConsent
+      tags: [leads-consent]
+      summary: Update WhatsApp consent status for a lead
+      parameters:
+        - in: path
+          name: leadId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadWhatsAppConsentUpdate"
+      responses:
+        "200":
+          description: Updated lead WhatsApp consent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadChannelConsent"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/suppression:
+    put:
+      operationId: suppressLead
+      tags: [lead-acquisition]
+      summary: Suppress / Do Not Contact a lead
+      description: >
+        Applies an ordinary Do Not Contact suppression (idempotent upsert of the
+        canonical suppression row). This CANNOT overwrite a permanent outreach
+        opt-out: if the lead has a durable outreach opt-out row, the canonical
+        "Outreach opt-out" suppression reason/timestamp/flag are preserved
+        untouched and the request is rejected with 409 (no suppression row,
+        flag, timestamp, or activity is written) so the detail UI and every
+        other DNC consumer keep recognizing the permanent Do Not Contact.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadSuppressionInput"
+      responses:
+        "200":
+          description: Lead suppressed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: >
+            The lead has permanently opted out of outreach; that canonical Do
+            Not Contact status cannot be overwritten by an ordinary suppression.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: unsuppressLead
+      tags: [lead-acquisition]
+      summary: Remove suppression from a lead
+      description: >
+        Removes an ordinary Do Not Contact suppression. This CANNOT remove a
+        permanent outreach opt-out: if the lead has a durable outreach opt-out
+        row, the canonical suppression is preserved and the request is rejected
+        with 409 so prospect generation, dashboards, and every other DNC
+        consumer stay blocked.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      responses:
+        "200":
+          description: Suppression removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadRecord"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found or not suppressed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: >
+            The lead has permanently opted out of outreach; that Do Not Contact
+            status cannot be removed with unsuppress.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Prospect Lifecycle Routes ─────────────────────────────────────────────
+  /leads/{leadId}/prospect-site:
+    get:
+      operationId: getProspectSite
+      tags: [lead-acquisition]
+      summary: Get the prospect lifecycle record for a lead (null if none exists)
+      description: >
+        Always returns HTTP 200. Returns the ProspectSiteRecord when a lifecycle
+        exists for the lead, or null when no prospect has been generated yet.
+        This gives the UI a stable empty state without special-casing 404.
+        Returns 404 only if the lead itself does not belong to the owner.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      responses:
+        "200":
+          description: Prospect lifecycle record, or null if no lifecycle exists
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ProspectSiteRecord"
+                  - type: "null"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found or not owned by caller
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: generateProspectSite
+      tags: [lead-acquisition]
+      summary: Generate an editable prospect site draft for a lead
+      description: >
+        Lead must be qualified and not suppressed. verifiedFields is an
+        allowlisted subset of the lead's stored verified data. businessName
+        is required. The server derives field values from the lead record;
+        the client must never supply values. Creates a new prospect lifecycle
+        entry and website. Conflicts with an existing active draft.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProspectGenerateRequest"
+      responses:
+        "201":
+          description: Prospect site generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectSiteRecord"
+        "400":
+          description: Invalid request or lead not qualified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Active draft already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/prospect-site/regenerate:
+    post:
+      operationId: regenerateProspectSite
+      tags: [lead-acquisition]
+      summary: Regenerate a prospect site (archives old, creates fresh)
+      description: >
+        Atomically archives the existing website and generation, revokes the
+        preview, creates a fresh website and generation, and repoints the
+        lifecycle. Forces any concurrent Studio save conflict on the old website.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProspectGenerateRequest"
+      responses:
+        "200":
+          description: Prospect site regenerated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectSiteRecord"
+        "400":
+          description: Invalid request or lead not qualified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead or active prospect not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/prospect-site/preview:
+    post:
+      operationId: publishProspectPreview
+      tags: [lead-acquisition]
+      summary: Publish a signed prospect preview link
+      description: >
+        Requires an active draft. Takes expectedRevision to ensure the exact
+        website version is previewed. Server generates the site from stored
+        projectSource using the shared generator (prospect-safe mode).
+        Returns a signed URL with high-entropy mapping id.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProspectPreviewRequest"
+      responses:
+        "201":
+          description: Prospect preview published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectPreviewPublication"
+        "400":
+          description: Invalid request or prospect-safe validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead or active draft not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Revision conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: revokeProspectPreview
+      tags: [lead-acquisition]
+      summary: Revoke the prospect preview link
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      responses:
+        "204":
+          description: Preview revoked
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Preview not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/prospect-site/archive:
+    post:
+      operationId: archiveProspectSite
+      tags: [lead-acquisition]
+      summary: Archive the prospect lifecycle (revoke preview, mark archived)
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      responses:
+        "200":
+          description: Prospect archived
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectSiteRecord"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead or active prospect not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Already archived or converted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/prospect-site/convert:
+    post:
+      operationId: convertProspectSite
+      tags: [lead-acquisition]
+      summary: Convert a prospect draft to a live customer website
+      description: >
+        Requires active draft and expectedRevision match. Changes the SAME
+        website to site_type=customer/status=active, increments revision,
+        marks lifecycle converted, updates lead to won, revokes preview.
+        Preserves projectSource/id/history. Forces concurrent Studio save conflict.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProspectConvertRequest"
+      responses:
+        "200":
+          description: Prospect converted to customer website
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectConvertResult"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead or active draft not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Revision conflict or already converted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Lead Outreach Routes ──────────────────────────────────────────────────
+  /outreach/drafts:
+    get:
+      operationId: listOutreachDrafts
+      tags: [lead-acquisition]
+      summary: Central owner-scoped list of outreach drafts
+      description: >
+        Owner-scoped list across all leads. Filter by channel/status; paginate
+        with limit/offset. When search is provided, the server performs a
+        case-insensitive match over the associated lead's businessName, email,
+        and phone via an owner-scoped join. ownerId is always derived from the
+        session; leadBusinessName and recipientDisplay are server-derived.
+      parameters:
+        - in: query
+          name: channel
+          required: false
+          schema:
+            type: string
+            enum: [email, whatsapp]
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [draft, reviewed, gmail_draft_created, discarded, replied]
+        - in: query
+          name: search
+          required: false
+          description: >
+            Case-insensitive substring match over the associated lead's
+            businessName, email, and phone. Max 200 characters. Triggers a
+            server-side join; count and pagination remain correct.
+          schema:
+            type: string
+            maxLength: 200
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - in: query
+          name: offset
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: Outreach draft list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutreachDraftList"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/outreach:
+    get:
+      operationId: getLeadOutreach
+      tags: [lead-acquisition]
+      summary: Get outreach summary, drafts, and history for a lead
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      responses:
+        "200":
+          description: Outreach summary for the lead
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadOutreachSummary"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createOutreachDraft
+      tags: [lead-acquisition]
+      summary: Create a fact-grounded first-contact outreach draft
+      description: >
+        Lead must be qualified and not blocked (suppressed or opted out).
+        selectedFields is an allowlisted subset of fact field names. The server
+        rereads stored lead values and only uses user_provided or verified
+        provenance. businessName is required. If confirmImportedFields is set,
+        the server appends verified source rows from stored values for those
+        allowlisted fields before rendering. Deterministic copy only — no LLM.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOutreachDraftRequest"
+      responses:
+        "201":
+          description: Outreach draft created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutreachDraftRecord"
+        "400":
+          description: Invalid request or lead not qualified or no usable facts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Lead blocked (suppressed or opted out)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/outreach/{draftId}:
+    patch:
+      operationId: updateOutreachDraft
+      tags: [lead-acquisition]
+      summary: Update subject/body of an outreach draft (clears review)
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/DraftId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOutreachDraftRequest"
+      responses:
+        "200":
+          description: Outreach draft updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutreachDraftRecord"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Draft not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Draft not editable or lead blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/outreach/{draftId}/review:
+    post:
+      operationId: reviewOutreachDraft
+      tags: [lead-acquisition]
+      summary: Explicitly mark the current outreach copy as reviewed
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/DraftId"
+      responses:
+        "200":
+          description: Draft marked reviewed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutreachDraftRecord"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Draft not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Draft not reviewable or lead blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/outreach/{draftId}/gmail-draft:
+    post:
+      operationId: createOutreachGmailDraft
+      tags: [lead-acquisition]
+      summary: Create a Gmail draft for a reviewed outreach draft (never sends)
+      description: >
+        Requires the current copy to be reviewed and the lead to be eligible
+        (rechecked under the per-lead advisory lock + transaction). Creates a
+        Gmail DRAFT only — never sends, never marks sent/delivered. Success
+        status is gmail_draft_created. Idempotent: if a Gmail draft has already
+        been created for this outreach draft, returns 200 with
+        status=gmail_draft_created and the existing record (not an error).
+        Subject and recipient are validated for header safety before any provider
+        call. The Gmail and opt-out paths share a per-lead advisory lock so an
+        opt-out committed before Gmail starts always blocks it.
+        An ambiguous provider outcome stays reconciliation-pending and never
+        permits another Gmail create request. Repeating this endpoint while
+        pending performs a lookup only. A found draft is reconciled; an
+        unavailable or not-yet-indexed result stays pending; and a confirmed
+        absence after the safety delay becomes retry-ready for a separate,
+        later owner action.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/DraftId"
+      responses:
+        "200":
+          description: >
+            Gmail draft created (status=gmail_draft_created), or idempotent
+            success if already created, or WhatsApp channel not configured
+            (status=provider_not_configured, no side effect).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutreachGmailResult"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Draft not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: >
+            Not reviewed, lead blocked, reconciliation still pending, or a
+            confirmed-absent attempt has just become retry-ready. A pending
+            response never creates another Gmail draft.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: >
+            Gmail did not confirm the draft. The attempt remains
+            reconciliation-pending and a later call performs lookup only.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/outreach/{draftId}/discard:
+    post:
+      operationId: discardOutreachDraft
+      tags: [lead-acquisition]
+      summary: Discard an outreach draft
+      description: >
+        Reloads the owner-scoped lead FOR UPDATE and checks DNC/opt-out before
+        acting. Returns 409 if the lead is suppressed or has opted out, or if
+        the draft is already discarded.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/DraftId"
+      responses:
+        "200":
+          description: Draft discarded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutreachDraftRecord"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Draft not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Draft already terminal, or lead is suppressed/opted-out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/outreach/{draftId}/reply:
+    post:
+      operationId: markOutreachReply
+      tags: [lead-acquisition]
+      summary: Manually mark that a reply was received for an outreach draft
+      description: >
+        Reloads the owner-scoped lead FOR UPDATE and checks DNC/opt-out before
+        acting. Returns 409 if the lead is suppressed or has opted out.
+        Records only a human-observed reply — never invents delivery events.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/DraftId"
+      responses:
+        "200":
+          description: Reply marked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutreachDraftRecord"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Draft not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Lead is suppressed or opted out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/{leadId}/outreach/opt-out:
+    post:
+      operationId: optOutLeadOutreach
+      tags: [lead-acquisition]
+      summary: Opt a lead out of all outreach (permanent Do Not Contact)
+      description: >
+        Records a permanent outreach opt-out. In a single transaction under the
+        per-lead advisory lock this upserts the durable outreach opt-out row,
+        upserts the canonical lead_acquisition_suppressions record (honest
+        "Outreach opt-out" reason), and sets leads.suppressed=true. The response
+        reflects the ACTUAL updated suppression state. Because the canonical
+        suppression is written, the opt-out propagates to prospect generation,
+        dashboards, and every other DNC consumer, and it cannot be undone by the
+        ordinary unsuppress endpoint.
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutreachOptOutRequest"
+      responses:
+        "200":
+          description: Lead opted out; outreach suppressed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadOutreachSummary"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Public Prospect Preview Delivery ──────────────────────────────────────
+  /prospect-previews/{mappingId}/{signature}/:
+    get:
+      operationId: getProspectPreviewAsset
+      tags: [lead-acquisition]
+      summary: Serve a signed public prospect preview index page
+      description: >
+        Public endpoint (no auth). The mappingId is a high-entropy random value
+        and the signature is an HMAC embedded as a path segment (not a query
+        param) so relative assets resolve under the signed prefix. The signature
+        is verified server-side via HMAC. The frozen, validated site captured at
+        publish time is served verbatim from the shared preview store — the
+        editable website source is never re-read or re-generated here. Returns
+        404 no-store if unavailable, expired, or tampered. No signature appears
+        in logs.
+      parameters:
+        - in: path
+          name: mappingId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: signature
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Preview index page (HTML)
+        "404":
+          description: Preview unavailable
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /prospect-previews/{mappingId}/{signature}/{asset}:
+    get:
+      operationId: getProspectPreviewFile
+      tags: [lead-acquisition]
+      summary: Serve a signed public prospect preview file (page/CSS/JS/image)
+      description: >
+        Public endpoint (no auth). Serves an individual frozen asset under the
+        signed prefix (styles.css, main.js, additional pages, or images). The
+        frozen site is served verbatim with a strict prospect CSP
+        (img-src 'self' data:, connect-src 'none'); no external media or
+        network access is permitted. Returns 404 no-store if unavailable,
+        expired, or tampered.
+      parameters:
+        - in: path
+          name: mappingId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: signature
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: asset
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Preview file
+        "404":
+          description: Preview unavailable
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  parameters:
+    LeadId:
+      in: path
+      name: leadId
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    DraftId:
+      in: path
+      name: draftId
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    SetupKey:
+      in: header
+      name: X-SiteForge-Setup-Key
+      required: false
+      description: Required only for legacy pilot provisioning without a signed-in Clerk session
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 256
+    EditorKey:
+      in: header
+      name: X-SiteForge-Editor-Key
+      required: true
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 128
+    PreviewId:
+      in: path
+      name: previewId
+      required: true
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 128
+    OwnerKey:
+      in: header
+      name: X-SiteForge-Owner-Key
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    ReceptionistId:
+      in: path
+      name: receptionistId
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    ConversationId:
+      in: path
+      name: conversationId
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    SessionToken:
+      in: header
+      name: X-SiteForge-Session-Token
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    MessageId:
+      in: path
+      name: messageId
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    WebsiteId:
+      in: path
+      name: websiteId
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    GeneratedSite:
+      type: object
+      additionalProperties: false
+      properties:
+        pages:
+          type: object
+          minProperties: 1
+          maxProperties: 4
+          additionalProperties:
+            type: string
+            maxLength: 25000
+        css:
+          type: string
+          maxLength: 50000
+        js:
+          type: string
+          maxLength: 10000
+        media:
+          type: object
+          maxProperties: 24
+          additionalProperties:
+            $ref: "#/components/schemas/GeneratedMediaAsset"
+      required:
+        - pages
+        - css
+        - js
+    GeneratedMediaAsset:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: "^[a-zA-Z0-9_-]+$"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        mimeType:
+          type: string
+          enum:
+            - image/jpeg
+            - image/png
+            - image/webp
+            - image/gif
+            - image/avif
+        dataUrl:
+          type: string
+          minLength: 1
+          maxLength: 410000
+      required:
+        - id
+        - name
+        - mimeType
+        - dataUrl
+    PreviewPublishRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        projectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        projectUpdatedAt:
+          type: number
+          minimum: 0
+        site:
+          $ref: "#/components/schemas/GeneratedSite"
+      required:
+        - projectId
+        - projectUpdatedAt
+        - site
+    PreviewRefreshRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        projectUpdatedAt:
+          type: number
+          minimum: 0
+        site:
+          $ref: "#/components/schemas/GeneratedSite"
+      required:
+        - projectUpdatedAt
+        - site
+    PreviewPublication:
+      type: object
+      additionalProperties: false
+      properties:
+        previewId:
+          type: string
+        path:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        projectUpdatedAt:
+          type: number
+      required:
+        - previewId
+        - path
+        - expiresAt
+        - projectUpdatedAt
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    # ─── Receptionist ────────────────────────────────────────────────────────
+    ReceptionistInput:
+      type: object
+      additionalProperties: false
+      properties:
+        businessName:
+          type: string
+          minLength: 1
+          maxLength: 200
+        businessEmail:
+          type: string
+          maxLength: 200
+        assistantName:
+          type: string
+          maxLength: 100
+      required:
+        - businessName
+
+    ReceptionistCreated:
+      type: object
+      additionalProperties: false
+      properties:
+        receptionistId:
+          type: string
+        ownerKey:
+          type: string
+          description: One-time secret; store it — it will not be shown again
+      required:
+        - receptionistId
+        - ownerKey
+
+    ReceptionistSettings:
+      type: object
+      additionalProperties: false
+      properties:
+        receptionistId:
+          type: string
+        enabled:
+          type: boolean
+        businessName:
+          type: string
+        businessEmail:
+          type: ["string", "null"]
+        assistantName:
+          type: string
+        greeting:
+          type: ["string", "null"]
+        knowledge:
+          type: ["string", "null"]
+        faqs:
+          type: ["string", "null"]
+        hours:
+          type: ["string", "null"]
+        serviceArea:
+          type: ["string", "null"]
+        escalationContact:
+          type: ["string", "null"]
+        prohibitedActions:
+          type: ["string", "null"]
+        safeAutoReplyCategories:
+          type: ["string", "null"]
+        retellAgentId:
+          type: ["string", "null"]
+        retellPhoneNumber:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - receptionistId
+        - enabled
+        - businessName
+        - assistantName
+        - createdAt
+        - updatedAt
+
+    ReceptionistSettingsUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        businessName:
+          type: string
+          minLength: 1
+          maxLength: 200
+        businessEmail:
+          type: ["string", "null"]
+          maxLength: 200
+        assistantName:
+          type: string
+          maxLength: 100
+        greeting:
+          type: ["string", "null"]
+          maxLength: 2000
+        knowledge:
+          type: ["string", "null"]
+          maxLength: 20000
+        faqs:
+          type: ["string", "null"]
+          maxLength: 10000
+        hours:
+          type: ["string", "null"]
+          maxLength: 2000
+        serviceArea:
+          type: ["string", "null"]
+          maxLength: 1000
+        escalationContact:
+          type: ["string", "null"]
+          maxLength: 500
+        prohibitedActions:
+          type: ["string", "null"]
+          maxLength: 2000
+        safeAutoReplyCategories:
+          type: ["string", "null"]
+          maxLength: 2000
+        retellAgentId:
+          type: ["string", "null"]
+          maxLength: 200
+        retellPhoneNumber:
+          type: ["string", "null"]
+          maxLength: 30
+
+    # ─── Conversations & Messages ────────────────────────────────────────────
+    ConversationSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        conversationId:
+          type: string
+        receptionistId:
+          type: string
+        channel:
+          type: string
+        externalId:
+          type: ["string", "null"]
+        subject:
+          type: ["string", "null"]
+        status:
+          type: string
+        messageCount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - conversationId
+        - receptionistId
+        - channel
+        - status
+        - messageCount
+        - createdAt
+        - updatedAt
+
+    ConversationPage:
+      type: object
+      additionalProperties: false
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationSummary"
+        total:
+          type: number
+      required:
+        - conversations
+        - total
+
+    ChatMessage:
+      type: object
+      additionalProperties: false
+      properties:
+        messageId:
+          type: string
+        conversationId:
+          type: string
+        receptionistId:
+          type: string
+        role:
+          type: string
+        content:
+          type: string
+        approvalState:
+          type: ["string", "null"]
+        externalMessageId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - messageId
+        - conversationId
+        - receptionistId
+        - role
+        - content
+        - createdAt
+
+    AuditEvent:
+      type: object
+      additionalProperties: false
+      properties:
+        auditEventId:
+          type: string
+        eventType:
+          type: string
+        messageId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - auditEventId
+        - eventType
+        - createdAt
+
+    ConversationDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        conversationId:
+          type: string
+        receptionistId:
+          type: string
+        channel:
+          type: string
+        externalId:
+          type: ["string", "null"]
+        subject:
+          type: ["string", "null"]
+        status:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+        auditEvents:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEvent"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - conversationId
+        - receptionistId
+        - channel
+        - status
+        - messages
+        - auditEvents
+        - createdAt
+        - updatedAt
+
+    OwnerReplyInput:
+      type: object
+      additionalProperties: false
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+      required:
+        - content
+
+    ConversationStatusUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [open, closed]
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+      required:
+        - status
+        - expectedUpdatedAt
+
+    ConversationStatus:
+      type: object
+      additionalProperties: false
+      properties:
+        conversationId:
+          type: string
+        receptionistId:
+          type: string
+        status:
+          type: string
+          enum: [open, closed, escalated]
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - conversationId
+        - receptionistId
+        - status
+        - updatedAt
+
+    # ─── Gmail ───────────────────────────────────────────────────────────────
+    GmailSyncResult:
+      type: object
+      additionalProperties: false
+      properties:
+        threadsChecked:
+          type: number
+        newMessages:
+          type: number
+        suggestionsCreated:
+          type: number
+      required:
+        - threadsChecked
+        - newMessages
+        - suggestionsCreated
+
+    EmailApprovalResult:
+      type: object
+      additionalProperties: false
+      properties:
+        messageId:
+          type: string
+        approvalState:
+          type: string
+        gmailDraftId:
+          type: ["string", "null"]
+      required:
+        - messageId
+        - approvalState
+
+    # ─── Retell ──────────────────────────────────────────────────────────────
+    RetellSyncResult:
+      type: object
+      additionalProperties: false
+      properties:
+        callsChecked:
+          type: number
+        newConversations:
+          type: number
+        newMessages:
+          type: number
+      required:
+        - callsChecked
+        - newConversations
+        - newMessages
+
+    # ─── Widget ──────────────────────────────────────────────────────────────
+    WidgetConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        receptionistId:
+          type: string
+        enabled:
+          type: boolean
+        businessName:
+          type: string
+        assistantName:
+          type: string
+        greeting:
+          type: ["string", "null"]
+      required:
+        - receptionistId
+        - enabled
+        - businessName
+        - assistantName
+
+    WidgetChatInput:
+      type: object
+      additionalProperties: false
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        sessionToken:
+          type: ["string", "null"]
+          maxLength: 128
+      required:
+        - message
+
+    WidgetReply:
+      type: object
+      additionalProperties: false
+      properties:
+        sessionToken:
+          type: string
+        conversationId:
+          type: string
+        reply:
+          type: string
+        escalate:
+          type: boolean
+        escalationContact:
+          type: ["string", "null"]
+      required:
+        - sessionToken
+        - conversationId
+        - reply
+        - escalate
+
+    WidgetMessage:
+      type: object
+      additionalProperties: false
+      properties:
+        messageId:
+          type: string
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - messageId
+        - role
+        - content
+        - createdAt
+
+    WidgetConversationMessages:
+      type: object
+      additionalProperties: false
+      properties:
+        conversationId:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/WidgetMessage"
+      required:
+        - conversationId
+        - messages
+
+    # ─── Accounts ─────────────────────────────────────────────────────────────
+    AccountInfo:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        email:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - userId
+        - createdAt
+        - updatedAt
+
+    # ─── Websites ──────────────────────────────────────────────────────────────
+
+    # Full editable project shape
+    SiteProjectSocialLink:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          maxLength: 64
+        url:
+          type: string
+          maxLength: 512
+      required:
+        - type
+        - url
+
+    SiteProjectMediaAsset:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        mimeType:
+          type: string
+          enum:
+            - image/jpeg
+            - image/png
+            - image/webp
+            - image/gif
+            - image/avif
+        dataUrl:
+          type: string
+          minLength: 1
+          maxLength: 500000
+      required:
+        - id
+        - name
+        - mimeType
+        - dataUrl
+
+    SiteProjectSectionItem:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          maxLength: 512
+        description:
+          type: string
+          maxLength: 4000
+        image:
+          $ref: "#/components/schemas/SiteProjectMediaAsset"
+      required:
+        - title
+        - description
+
+    SiteProjectSection:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        type:
+          type: string
+          enum:
+            - hero
+            - features
+            - services-list
+            - about-text
+            - testimonials
+            - contact-form
+            - gallery
+            - faq
+            - stats
+            - team
+        title:
+          type: ["string", "null"]
+          maxLength: 512
+        subtitle:
+          type: ["string", "null"]
+          maxLength: 1024
+        content:
+          type: ["string", "null"]
+          maxLength: 10000
+        image:
+          $ref: "#/components/schemas/SiteProjectMediaAsset"
+        items:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/SiteProjectSectionItem"
+      required:
+        - id
+        - type
+
+    SiteProjectPage:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          enum: [home, about, services, contact]
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        sections:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/SiteProjectSection"
+      required:
+        - id
+        - name
+        - sections
+
+    SiteProjectPages:
+      type: object
+      additionalProperties: false
+      properties:
+        home:
+          $ref: "#/components/schemas/SiteProjectPage"
+        about:
+          $ref: "#/components/schemas/SiteProjectPage"
+        services:
+          $ref: "#/components/schemas/SiteProjectPage"
+        contact:
+          $ref: "#/components/schemas/SiteProjectPage"
+      required:
+        - home
+        - about
+        - services
+        - contact
+
+    SiteProjectPageOrder:
+      type: object
+      additionalProperties: false
+      description: Ordered section IDs per fixed page key
+      properties:
+        home:
+          type: array
+          items:
+            type: string
+        about:
+          type: array
+          items:
+            type: string
+        services:
+          type: array
+          items:
+            type: string
+        contact:
+          type: array
+          items:
+            type: string
+      required:
+        - home
+        - about
+        - services
+        - contact
+
+    SiteProjectDesignTokens:
+      type: object
+      additionalProperties: false
+      properties:
+        primaryColor:
+          type: string
+          maxLength: 64
+        fontHeading:
+          type: string
+          maxLength: 128
+        fontBody:
+          type: string
+          maxLength: 128
+        borderRadius:
+          type: string
+          enum: [none, sm, md, lg, full]
+        buttonStyle:
+          type: string
+          enum: [solid, outline, ghost]
+      required:
+        - primaryColor
+        - fontHeading
+        - fontBody
+        - borderRadius
+        - buttonStyle
+
+    SiteProjectBusiness:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        category:
+          type: string
+          maxLength: 128
+        city:
+          type: string
+          maxLength: 128
+        phone:
+          type: string
+          maxLength: 64
+        email:
+          type: string
+          maxLength: 256
+        logo:
+          $ref: "#/components/schemas/SiteProjectMediaAsset"
+        socialLinks:
+          type: array
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/SiteProjectSocialLink"
+      required:
+        - name
+        - category
+        - city
+        - phone
+        - email
+
+    SiteProjectReceptionistSettings:
+      type: object
+      additionalProperties: false
+      description: Non-secret receptionist display settings — never includes ownerKey
+      properties:
+        enabled:
+          type: boolean
+        receptionistId:
+          type: ["string", "null"]
+          maxLength: 128
+        assistantName:
+          type: string
+          maxLength: 128
+        greeting:
+          type: ["string", "null"]
+          maxLength: 2000
+        knowledge:
+          type: ["string", "null"]
+          maxLength: 20000
+        faqs:
+          type: ["string", "null"]
+          maxLength: 20000
+        hours:
+          type: ["string", "null"]
+          maxLength: 2000
+        serviceArea:
+          type: ["string", "null"]
+          maxLength: 2000
+        escalationContact:
+          type: ["string", "null"]
+          maxLength: 512
+        prohibitedActions:
+          type: ["string", "null"]
+          maxLength: 4000
+        safeAutoReplyCategories:
+          type: ["string", "null"]
+          maxLength: 2000
+        retellAgentId:
+          type: ["string", "null"]
+          maxLength: 256
+        retellPhoneNumber:
+          type: ["string", "null"]
+          maxLength: 64
+        provisionedAt:
+          type: ["number", "null"]
+          description: Client-side milliseconds since epoch
+          minimum: 0
+        updatedAt:
+          type: ["number", "null"]
+          description: Client-side milliseconds since epoch
+          minimum: 0
+        hostedApiUrl:
+          type: ["string", "null"]
+          maxLength: 512
+      required:
+        - enabled
+        - assistantName
+
+    SiteProjectProspectMeta:
+      type: object
+      additionalProperties: false
+      description: >
+        Server-managed lifecycle identity for an editable prospect draft.
+        Ordinary customer website creation/import strips this field, while saves
+        to an existing prospect preserve the authoritative stored value.
+      properties:
+        isDraft:
+          type: boolean
+          enum: [true]
+        leadId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        generationId:
+          type: string
+          minLength: 1
+          maxLength: 128
+      required:
+        - isDraft
+        - leadId
+        - generationId
+
+    SiteProject:
+      type: object
+      additionalProperties: false
+      description: >
+        Complete editable project shape matching types.ts SiteProject.
+        Never accepts server-owned ownerId/revision or server timestamps.
+        ownerKey is unconditionally rejected.
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        createdAt:
+          type: number
+          description: Client-side milliseconds since epoch
+          minimum: 0
+        updatedAt:
+          type: number
+          description: Client-side milliseconds since epoch
+          minimum: 0
+        activePageId:
+          type: string
+          enum: [home, about, services, contact]
+        templateId:
+          type: string
+          enum: [home-services, advisor, cafe, wellness, creative, plumber, electrician, carpenter]
+        designTokens:
+          $ref: "#/components/schemas/SiteProjectDesignTokens"
+        business:
+          $ref: "#/components/schemas/SiteProjectBusiness"
+        pages:
+          $ref: "#/components/schemas/SiteProjectPages"
+        sectionOrder:
+          $ref: "#/components/schemas/SiteProjectPageOrder"
+        hiddenSections:
+          $ref: "#/components/schemas/SiteProjectPageOrder"
+        receptionist:
+          $ref: "#/components/schemas/SiteProjectReceptionistSettings"
+        prospectMeta:
+          $ref: "#/components/schemas/SiteProjectProspectMeta"
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+        - activePageId
+        - templateId
+        - designTokens
+        - business
+        - pages
+        - sectionOrder
+        - hiddenSections
+
+    WebsiteRecord:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, archived]
+        siteType:
+          type: string
+          enum: [customer, prospect]
+          description: >
+            Website type. 'customer' is a normal editable site.
+            'prospect' is an auto-generated lead-acquisition draft
+            managed by the prospect lifecycle service.
+        revision:
+          type: number
+        schemaVersion:
+          type: number
+        sourceUpdatedAt:
+          type: ["number", "null"]
+        projectSource:
+          $ref: "#/components/schemas/SiteProject"
+        settings:
+          type: object
+          additionalProperties: {}
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - status
+        - siteType
+        - revision
+        - schemaVersion
+        - projectSource
+        - settings
+        - createdAt
+        - updatedAt
+
+    WebsiteList:
+      type: object
+      additionalProperties: false
+      properties:
+        websites:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebsiteRecord"
+      required:
+        - websites
+
+    WebsiteInput:
+      type: object
+      additionalProperties: false
+      description: Body for creating a new website. Server owns ownerId/revision/timestamps.
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        projectSource:
+          $ref: "#/components/schemas/SiteProject"
+        settings:
+          type: object
+          additionalProperties: {}
+      required:
+        - name
+        - projectSource
+
+    WebsiteSave:
+      type: object
+      additionalProperties: false
+      description: Full save requires expectedRevision for optimistic concurrency.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        projectSource:
+          $ref: "#/components/schemas/SiteProject"
+        settings:
+          type: object
+          additionalProperties: {}
+        expectedRevision:
+          type: number
+          minimum: 0
+        sourceUpdatedAt:
+          type: ["number", "null"]
+          minimum: 0
+      required:
+        - projectSource
+        - expectedRevision
+
+    WebsiteRename:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        expectedRevision:
+          type: number
+          minimum: 0
+      required:
+        - name
+        - expectedRevision
+
+    WebsiteDuplicate:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+      required:
+        - name
+
+    WebsiteConflict:
+      type: object
+      additionalProperties: false
+      description: Returned on 409 so client can recover from stale revision
+      properties:
+        error:
+          type: string
+        current:
+          $ref: "#/components/schemas/WebsiteRecord"
+      required:
+        - error
+        - current
+
+    WebsiteImportItem:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        projectSource:
+          $ref: "#/components/schemas/SiteProject"
+        settings:
+          type: object
+          additionalProperties: {}
+        sourceUpdatedAt:
+          type: ["number", "null"]
+          minimum: 0
+      required:
+        - id
+        - name
+        - projectSource
+
+    WebsiteImportRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        websites:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/WebsiteImportItem"
+      required:
+        - websites
+
+    WebsiteImportItemResult:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [imported, updated, skipped, error]
+        error:
+          type: ["string", "null"]
+      required:
+        - id
+        - status
+
+    WebsiteImportResult:
+      type: object
+      additionalProperties: false
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebsiteImportItemResult"
+        imported:
+          type: number
+        updated:
+          type: number
+        skipped:
+          type: number
+        errors:
+          type: number
+      required:
+        - results
+        - imported
+        - updated
+        - skipped
+        - errors
+
+    # ─── Lead Acquisition ─────────────────────────────────────────────────────
+
+    LeadAcquisitionConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        discoveryProvider:
+          type: object
+          additionalProperties: false
+          properties:
+            configured:
+              type: boolean
+            message:
+              type: ["string", "null"]
+          required:
+            - configured
+      required:
+        - enabled
+        - discoveryProvider
+
+    LeadScoreReason:
+      type: object
+      additionalProperties: false
+      properties:
+        key:
+          type: string
+          maxLength: 64
+        label:
+          type: string
+          maxLength: 256
+        points:
+          type: number
+        weight:
+          type: number
+      required:
+        - key
+        - label
+        - points
+        - weight
+
+    LeadScoreSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        score:
+          type: ["number", "null"]
+          minimum: 0
+          maximum: 100
+        band:
+          type: ["string", "null"]
+          enum: [low, medium, high, null]
+        reasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadScoreReason"
+        scoredAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - score
+        - band
+        - reasons
+        - scoredAt
+
+    LeadSuppressionSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        suppressed:
+          type: boolean
+        reason:
+          type: ["string", "null"]
+          maxLength: 500
+        suppressedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - suppressed
+        - reason
+        - suppressedAt
+
+    LeadRecord:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        businessName:
+          type: string
+          maxLength: 300
+        category:
+          type: ["string", "null"]
+          maxLength: 128
+        description:
+          type: ["string", "null"]
+          maxLength: 2000
+        address:
+          type: ["string", "null"]
+          maxLength: 500
+        city:
+          type: ["string", "null"]
+          maxLength: 128
+        region:
+          type: ["string", "null"]
+          maxLength: 128
+        postalCode:
+          type: ["string", "null"]
+          maxLength: 20
+        country:
+          type: ["string", "null"]
+          maxLength: 64
+        phone:
+          type: ["string", "null"]
+          maxLength: 50
+        email:
+          type: ["string", "null"]
+          maxLength: 320
+        websiteUrl:
+          type: ["string", "null"]
+          maxLength: 2048
+        listingUrl:
+          type: ["string", "null"]
+          maxLength: 2048
+        rating:
+          type: ["number", "null"]
+        reviewCount:
+          type: ["number", "null"]
+        services:
+          type: ["string", "null"]
+          maxLength: 1000
+        pipelineStatus:
+          type: string
+          enum: [new, contacted, qualified, proposal, won, lost, archived]
+        websiteStatus:
+          type: string
+          enum: [unknown, has_website, no_website, placeholder, outdated]
+        sourceProvider:
+          type: ["string", "null"]
+          maxLength: 64
+        sourceReference:
+          type: ["string", "null"]
+          maxLength: 512
+        sourceState:
+          type: ["string", "null"]
+          maxLength: 64
+        scoreSummary:
+          $ref: "#/components/schemas/LeadScoreSummary"
+        suppressionSummary:
+          $ref: "#/components/schemas/LeadSuppressionSummary"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - businessName
+        - pipelineStatus
+        - websiteStatus
+        - scoreSummary
+        - suppressionSummary
+        - createdAt
+        - updatedAt
+
+    LeadSourceRecord:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        fieldName:
+          type: string
+          maxLength: 64
+        value:
+          type: ["string", "null"]
+          maxLength: 2048
+        provenance:
+          type: string
+          enum: [user_provided, imported, verified, inferred, ai_generated, provider]
+        provider:
+          type: ["string", "null"]
+          maxLength: 64
+        recordedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - fieldName
+        - provenance
+        - recordedAt
+
+    LeadActivityRecord:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        activityType:
+          type: string
+          maxLength: 64
+        note:
+          type: ["string", "null"]
+          maxLength: 2000
+        performedBy:
+          type: ["string", "null"]
+          maxLength: 128
+        occurredAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - activityType
+        - occurredAt
+
+    LeadDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        lead:
+          $ref: "#/components/schemas/LeadRecord"
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadSourceRecord"
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadActivityRecord"
+      required:
+        - lead
+        - sources
+        - activities
+
+    LeadList:
+      type: object
+      additionalProperties: false
+      properties:
+        leads:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadRecord"
+        total:
+          type: number
+        limit:
+          type: number
+        offset:
+          type: number
+      required:
+        - leads
+        - total
+        - limit
+        - offset
+
+    LeadInput:
+      type: object
+      additionalProperties: false
+      properties:
+        businessName:
+          type: string
+          minLength: 1
+          maxLength: 300
+        category:
+          type: string
+          maxLength: 128
+        description:
+          type: string
+          maxLength: 2000
+        address:
+          type: string
+          maxLength: 500
+        city:
+          type: string
+          maxLength: 128
+        region:
+          type: string
+          maxLength: 128
+        postalCode:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 64
+        phone:
+          type: string
+          maxLength: 50
+        email:
+          type: string
+          maxLength: 320
+        websiteUrl:
+          type: string
+          maxLength: 2048
+        listingUrl:
+          type: string
+          maxLength: 2048
+        rating:
+          type: number
+        reviewCount:
+          type: number
+          minimum: 0
+        services:
+          type: string
+          maxLength: 1000
+        websiteStatus:
+          type: string
+          enum: [unknown, has_website, no_website, placeholder, outdated]
+      required:
+        - businessName
+
+    LeadUpdate:
+      type: object
+      additionalProperties: false
+      description: >
+        All fields are optional. String fields, rating, and reviewCount accept
+        null to explicitly clear the value (set the column to NULL in the DB).
+        businessName is the only field that may not be cleared (non-null when present).
+      properties:
+        businessName:
+          type: string
+          minLength: 1
+          maxLength: 300
+        category:
+          type: ["string", "null"]
+          maxLength: 128
+        description:
+          type: ["string", "null"]
+          maxLength: 2000
+        address:
+          type: ["string", "null"]
+          maxLength: 500
+        city:
+          type: ["string", "null"]
+          maxLength: 128
+        region:
+          type: ["string", "null"]
+          maxLength: 128
+        postalCode:
+          type: ["string", "null"]
+          maxLength: 20
+        country:
+          type: ["string", "null"]
+          maxLength: 64
+        phone:
+          type: ["string", "null"]
+          maxLength: 50
+        email:
+          type: ["string", "null"]
+          maxLength: 320
+        websiteUrl:
+          type: ["string", "null"]
+          maxLength: 2048
+        listingUrl:
+          type: ["string", "null"]
+          maxLength: 2048
+        rating:
+          type: ["number", "null"]
+        reviewCount:
+          type: ["number", "null"]
+          minimum: 0
+        services:
+          type: ["string", "null"]
+          maxLength: 1000
+        pipelineStatus:
+          type: string
+          enum: [new, contacted, qualified, proposal, won, lost, archived]
+        websiteStatus:
+          type: string
+          enum: [unknown, has_website, no_website, placeholder, outdated]
+
+    LeadImportItem:
+      type: object
+      additionalProperties: false
+      properties:
+        businessName:
+          type: string
+          minLength: 1
+          maxLength: 300
+        category:
+          type: string
+          maxLength: 128
+        description:
+          type: string
+          maxLength: 2000
+        address:
+          type: string
+          maxLength: 500
+        city:
+          type: string
+          maxLength: 128
+        region:
+          type: string
+          maxLength: 128
+        postalCode:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 64
+        phone:
+          type: string
+          maxLength: 50
+        email:
+          type: string
+          maxLength: 320
+        websiteUrl:
+          type: string
+          maxLength: 2048
+        listingUrl:
+          type: string
+          maxLength: 2048
+        rating:
+          type: number
+        reviewCount:
+          type: number
+          minimum: 0
+        services:
+          type: string
+          maxLength: 1000
+        websiteStatus:
+          type: string
+          enum: [unknown, has_website, no_website, placeholder, outdated]
+        sourceProvider:
+          type: string
+          maxLength: 64
+        sourceReference:
+          type: string
+          maxLength: 512
+      required:
+        - businessName
+
+    LeadImportRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/LeadImportItem"
+      required:
+        - items
+
+    LeadImportItemResult:
+      type: object
+      additionalProperties: false
+      properties:
+        index:
+          type: number
+        status:
+          type: string
+          enum: [created, skipped]
+        leadId:
+          type: ["string", "null"]
+        duplicateLeadId:
+          type: ["string", "null"]
+        error:
+          type: ["string", "null"]
+      required:
+        - index
+        - status
+
+    LeadImportResult:
+      type: object
+      additionalProperties: false
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadImportItemResult"
+        created:
+          type: number
+        skipped:
+          type: number
+      required:
+        - results
+        - created
+        - skipped
+
+    LeadDuplicateConflict:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        duplicateLeadId:
+          type: string
+      required:
+        - error
+        - duplicateLeadId
+
+    LeadSuppressionInput:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+      required:
+        - reason
+
+    LeadDashboardWebsiteStatusCounts:
+      type: object
+      additionalProperties: false
+      properties:
+        unknown:
+          type: number
+        has_website:
+          type: number
+        no_website:
+          type: number
+        placeholder:
+          type: number
+        outdated:
+          type: number
+      required:
+        - unknown
+        - has_website
+        - no_website
+        - placeholder
+        - outdated
+
+    LeadDashboardScoreBandCounts:
+      type: object
+      additionalProperties: false
+      properties:
+        low:
+          type: number
+        medium:
+          type: number
+        high:
+          type: number
+        unscored:
+          type: number
+      required:
+        - low
+        - medium
+        - high
+        - unscored
+
+    LeadDashboardPipelineCounts:
+      type: object
+      additionalProperties: false
+      properties:
+        new:
+          type: number
+        contacted:
+          type: number
+        qualified:
+          type: number
+        proposal:
+          type: number
+        won:
+          type: number
+        lost:
+          type: number
+        archived:
+          type: number
+      required:
+        - new
+        - contacted
+        - qualified
+        - proposal
+        - won
+        - lost
+        - archived
+
+    LeadDashboardRecentLead:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        businessName:
+          type: string
+        pipelineStatus:
+          type: string
+        score:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - businessName
+        - pipelineStatus
+        - createdAt
+
+    LeadDashboardRecentActivity:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        leadId:
+          type: string
+        businessName:
+          type: string
+        activityType:
+          type: string
+        note:
+          type: ["string", "null"]
+        occurredAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - leadId
+        - businessName
+        - activityType
+        - occurredAt
+
+    LeadDashboard:
+      type: object
+      additionalProperties: false
+      properties:
+        totalLeads:
+          type: number
+        suppressedLeads:
+          type: number
+        averageScore:
+          type: ["number", "null"]
+        pipelineCounts:
+          $ref: "#/components/schemas/LeadDashboardPipelineCounts"
+        websiteStatusCounts:
+          $ref: "#/components/schemas/LeadDashboardWebsiteStatusCounts"
+        scoreBandCounts:
+          $ref: "#/components/schemas/LeadDashboardScoreBandCounts"
+        recentLeads:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadDashboardRecentLead"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadDashboardRecentActivity"
+      required:
+        - totalLeads
+        - suppressedLeads
+        - pipelineCounts
+        - websiteStatusCounts
+        - scoreBandCounts
+        - recentLeads
+        - recentActivity
+
+    # ── Prospect Lifecycle Schemas ──────────────────────────────────────────
+
+    ProspectVerifiedFields:
+      type: object
+      additionalProperties: false
+      description: >
+        Allowlisted field names from the lead record to include in generation.
+        businessName is required. Values are server-derived from stored lead
+        data; clients must not supply values.
+      properties:
+        businessName:
+          type: boolean
+          enum: [true]
+        category:
+          type: boolean
+        description:
+          type: boolean
+        city:
+          type: boolean
+        region:
+          type: boolean
+        address:
+          type: boolean
+        postalCode:
+          type: boolean
+        country:
+          type: boolean
+        phone:
+          type: boolean
+        email:
+          type: boolean
+        services:
+          type: boolean
+      required:
+        - businessName
+
+    ProspectGenerateRequest:
+      type: object
+      additionalProperties: false
+      description: >
+        Request to generate or regenerate a prospect site. templateId may be
+        explicitly overridden (must be a valid TemplateId); if omitted the
+        server derives one from the lead's category. verifiedFields selects
+        which lead fields to include (server reads values from lead record).
+      properties:
+        templateId:
+          type: string
+          description: Override template selection (optional).
+        verifiedFields:
+          $ref: "#/components/schemas/ProspectVerifiedFields"
+      required:
+        - verifiedFields
+
+    ProspectPreviewRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expectedRevision:
+          type: number
+          minimum: 0
+          description: >
+            Must match the current website revision. Ensures the preview
+            is published from the exact version the caller has seen.
+      required:
+        - expectedRevision
+
+    ProspectConvertRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expectedRevision:
+          type: number
+          minimum: 0
+          description: >
+            Must match the current website revision. Conversion will atomically
+            change the website type and increment revision.
+      required:
+        - expectedRevision
+
+    ProspectSiteRecord:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        leadId:
+          type: string
+        state:
+          type: string
+          enum: [active_draft, archived, converted]
+        websiteId:
+          type: ["string", "null"]
+        websiteRevision:
+          type: ["number", "null"]
+          description: Current website revision (null if no active website).
+        templateId:
+          type: ["string", "null"]
+          description: >
+            Template used for the current generation. Null if no generation
+            exists or if the value was not recorded.
+        generationCount:
+          type: number
+        hasActivePreview:
+          type: boolean
+        previewPath:
+          type: ["string", "null"]
+          description: >
+            Full path (with signature query parameter) to the active public
+            prospect preview, recomputed from the stored mapping on every GET.
+            Null when no unexpired preview exists. Signature is never logged.
+        previewExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        archivedAt:
+          type: ["string", "null"]
+          format: date-time
+        convertedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - id
+        - leadId
+        - state
+        - websiteId
+        - websiteRevision
+        - templateId
+        - generationCount
+        - hasActivePreview
+        - previewPath
+        - previewExpiresAt
+        - createdAt
+        - updatedAt
+        - archivedAt
+        - convertedAt
+
+    ProspectPreviewPublication:
+      type: object
+      additionalProperties: false
+      properties:
+        mappingId:
+          type: string
+        path:
+          type: string
+          description: Full URL path including signature query parameter.
+        expiresAt:
+          type: string
+          format: date-time
+        websiteRevision:
+          type: number
+      required:
+        - mappingId
+        - path
+        - expiresAt
+        - websiteRevision
+
+    ProspectConvertResult:
+      type: object
+      additionalProperties: false
+      properties:
+        lifecycleId:
+          type: string
+        websiteId:
+          type: string
+        newRevision:
+          type: number
+        leadStatus:
+          type: string
+      required:
+        - lifecycleId
+        - websiteId
+        - newRevision
+        - leadStatus
+
+    OutreachFactReference:
+      type: object
+      additionalProperties: false
+      description: A single fact used to render outreach copy (audit snapshot entry).
+      properties:
+        fieldName:
+          type: string
+          maxLength: 64
+        value:
+          type: string
+          maxLength: 2048
+        provenance:
+          type: string
+          enum: [user_provided, imported, verified, inferred, ai_generated, provider]
+        sourceId:
+          type: ["string", "null"]
+          maxLength: 128
+      required:
+        - fieldName
+        - value
+        - provenance
+
+    OutreachDraftRecord:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        leadId:
+          type: string
+        leadBusinessName:
+          type: ["string", "null"]
+          maxLength: 300
+          description: >
+            Business name from the associated lead row, populated server-side
+            via an owner-scoped join. Never accepted from the client.
+        recipientDisplay:
+          type: ["string", "null"]
+          maxLength: 320
+          description: >
+            Safe recipient identifier for display: the lead's stored email for
+            email-channel drafts, or the lead's stored phone for whatsapp-channel
+            drafts. Populated server-side from an owner-scoped join.
+            Never accepted from the client. Null when the lead has no value for
+            the relevant contact field.
+        channel:
+          type: string
+          enum: [email, whatsapp]
+        status:
+          type: string
+          enum: [draft, reviewed, gmail_draft_created, discarded, replied]
+        gmailState:
+          type: string
+          enum: [none, requesting, created, failed]
+        subject:
+          type: ["string", "null"]
+          maxLength: 500
+        body:
+          type: string
+          maxLength: 20000
+        factSnapshot:
+          type: ["array", "null"]
+          items:
+            $ref: "#/components/schemas/OutreachFactReference"
+        gmailDraftId:
+          type: ["string", "null"]
+          maxLength: 256
+        failureReason:
+          type: ["string", "null"]
+          maxLength: 500
+        reviewed:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        reviewedAt:
+          type: ["string", "null"]
+          format: date-time
+        gmailDraftCreatedAt:
+          type: ["string", "null"]
+          format: date-time
+        repliedAt:
+          type: ["string", "null"]
+          format: date-time
+        discardedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - id
+        - leadId
+        - channel
+        - status
+        - gmailState
+        - body
+        - reviewed
+        - createdAt
+        - updatedAt
+
+    OutreachEventRecord:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        draftId:
+          type: string
+        eventType:
+          type: string
+          enum: [created, edited, reviewed, discarded, gmail_requested, gmail_created, gmail_failed, gmail_reconciliation_pending, gmail_reconciled, gmail_retry_ready, reply_marked, opted_out]
+        performedBy:
+          type: ["string", "null"]
+          maxLength: 128
+        occurredAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - draftId
+        - eventType
+        - occurredAt
+
+    LeadOutreachSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        leadId:
+          type: string
+        optedOut:
+          type: boolean
+        suppressed:
+          type: boolean
+        blockedReason:
+          type: ["string", "null"]
+          maxLength: 500
+          description: >
+            Human-readable reason outreach is blocked, or null when not blocked.
+            Priority: opt-out wording takes precedence over generic suppression
+            wording when an outreach opt-out row exists, even if the lead is also
+            suppressed, because opt-out is the more specific, user-intentional
+            reason and both states block outreach equally.
+        drafts:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutreachDraftRecord"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutreachEventRecord"
+      required:
+        - leadId
+        - optedOut
+        - suppressed
+        - blockedReason
+        - drafts
+        - history
+
+    OutreachDraftList:
+      type: object
+      additionalProperties: false
+      properties:
+        drafts:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutreachDraftRecord"
+        total:
+          type: number
+        limit:
+          type: number
+        offset:
+          type: number
+      required:
+        - drafts
+        - total
+        - limit
+        - offset
+
+    CreateOutreachDraftRequest:
+      type: object
+      additionalProperties: false
+      description: >
+        Create a first-contact outreach draft. selectedFields is an allowlisted
+        subset of fact field names; the server reads values from the stored lead.
+        confirmImportedFields lets the owner explicitly confirm allowlisted
+        fields whose stored provenance is not yet approved, appending verified
+        source rows from the stored values before rendering.
+      properties:
+        channel:
+          type: string
+          enum: [email, whatsapp]
+        selectedFields:
+          type: array
+          items:
+            type: string
+            enum: [businessName, category, city, region, websiteUrl, services, description]
+          minItems: 1
+          maxItems: 7
+        confirmImportedFields:
+          type: array
+          items:
+            type: string
+            enum: [businessName, category, city, region, websiteUrl, services, description]
+          maxItems: 7
+      required:
+        - selectedFields
+
+    UpdateOutreachDraftRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        subject:
+          type: ["string", "null"]
+          maxLength: 500
+        body:
+          type: string
+          minLength: 1
+          maxLength: 20000
+      required:
+        - body
+
+    OutreachOptOutRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+        channel:
+          type: string
+          enum: [email, whatsapp]
+
+    OutreachGmailResult:
+      type: object
+      additionalProperties: false
+      description: >
+        Result of a Gmail draft creation attempt or a WhatsApp-not-configured
+        report. On email success, status is gmail_draft_created. WhatsApp always
+        returns provider_not_configured with no side effects.
+      properties:
+        draftId:
+          type: string
+        channel:
+          type: string
+          enum: [email, whatsapp]
+        status:
+          type: string
+          enum: [gmail_draft_created, provider_not_configured]
+        gmailDraftId:
+          type: ["string", "null"]
+          maxLength: 256
+        message:
+          type: ["string", "null"]
+          maxLength: 500
+        draft:
+          $ref: "#/components/schemas/OutreachDraftRecord"
+      required:
+        - draftId
+        - channel
+        - status
+        - draft
+
+    # ─── Provider Settings ────────────────────────────────────────────────────
+
+    ProviderCapability:
+      type: string
+      enum: [discovery, website_analysis, image, email, whatsapp]
+
+    ProviderAvailability:
+      type: string
+      enum: [not_configured, available, disabled, unavailable, rate_limited]
+
+    ProviderQuota:
+      type: object
+      additionalProperties: false
+      properties:
+        used:
+          type: number
+        limit:
+          type: number
+        remaining:
+          type: number
+        windowEndsAt:
+          type: string
+          format: date-time
+      required:
+        - used
+        - limit
+        - remaining
+        - windowEndsAt
+
+    ProviderNonSecretConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        whatsappTemplateName:
+          type: ["string", "null"]
+          maxLength: 128
+        whatsappTemplateLanguage:
+          type: ["string", "null"]
+          maxLength: 16
+        requireExplicitConsent:
+          type: boolean
+
+    ProviderCapabilitySetting:
+      type: object
+      additionalProperties: false
+      properties:
+        capability:
+          $ref: "#/components/schemas/ProviderCapability"
+        providerKey:
+          type: ["string", "null"]
+        displayName:
+          type: ["string", "null"]
+        enabled:
+          type: boolean
+        availability:
+          $ref: "#/components/schemas/ProviderAvailability"
+        message:
+          type: ["string", "null"]
+        rateLimitResetAt:
+          type: ["string", "null"]
+          format: date-time
+        config:
+          $ref: "#/components/schemas/ProviderNonSecretConfig"
+        quota:
+          oneOf:
+            - $ref: "#/components/schemas/ProviderQuota"
+            - type: "null"
+      required:
+        - capability
+        - enabled
+        - availability
+        - config
+
+    ProviderSettingsOverview:
+      type: object
+      additionalProperties: false
+      properties:
+        capabilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderCapabilitySetting"
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - capabilities
+        - updatedAt
+
+    ProviderSettingUpdate:
+      description: >
+        At least one of enabled or config must be provided.
+      anyOf:
+        - $ref: "#/components/schemas/ProviderSettingEnabledUpdate"
+        - $ref: "#/components/schemas/ProviderSettingConfigUpdate"
+
+    ProviderSettingEnabledUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        config:
+          $ref: "#/components/schemas/ProviderNonSecretConfig"
+      required:
+        - enabled
+
+    ProviderSettingConfigUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        config:
+          $ref: "#/components/schemas/ProviderNonSecretConfig"
+      required:
+        - config
+
+    ProviderAuditEvent:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        capability:
+          $ref: "#/components/schemas/ProviderCapability"
+        providerKey:
+          type: string
+        eventType:
+          type: string
+        outcome:
+          type: string
+          enum: [success, failure, skipped, unknown]
+        requestId:
+          type: ["string", "null"]
+        externalRef:
+          type: ["string", "null"]
+        detail:
+          type: ["string", "null"]
+          description: JSON-encoded detail payload from the provider event
+        occurredAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - capability
+        - providerKey
+        - eventType
+        - outcome
+        - occurredAt
+
+    ProviderAuditList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderAuditEvent"
+      required:
+        - items
+
+    # ─── Business Discovery ───────────────────────────────────────────────────
+
+    BusinessDiscoverySearchInput:
+      type: object
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+          minLength: 1
+          maxLength: 120
+        location:
+          type: string
+          minLength: 1
+          maxLength: 200
+        maxResults:
+          type: number
+          minimum: 1
+          maximum: 20
+          default: 10
+      required:
+        - category
+        - location
+
+    BusinessDiscoveryFactFieldName:
+      type: string
+      enum:
+        - businessName
+        - category
+        - address
+        - city
+        - region
+        - postalCode
+        - phone
+        - email
+        - websiteUrl
+
+    BusinessDiscoveryFact:
+      type: object
+      additionalProperties: false
+      properties:
+        fieldName:
+          $ref: "#/components/schemas/BusinessDiscoveryFactFieldName"
+        value:
+          type: string
+        provenance:
+          type: string
+          enum: [provider]
+        provider:
+          type: string
+        providerReference:
+          type: string
+      required:
+        - fieldName
+        - value
+        - provenance
+        - provider
+        - providerReference
+
+    BusinessDiscoveryImage:
+      type: object
+      additionalProperties: false
+      description: >
+        A business image returned by the discovery provider.
+        Images with eligibility "uncertain" are NEVER eligible for use on a
+        prospect site — only images with eligibility "approved" may be used.
+      properties:
+        url:
+          type: string
+        sourceUrl:
+          type: ["string", "null"]
+        eligibility:
+          type: string
+          enum: [approved, uncertain]
+        reason:
+          type: ["string", "null"]
+      required:
+        - url
+        - eligibility
+
+    BusinessDiscoveryBusiness:
+      type: object
+      additionalProperties: false
+      properties:
+        providerReference:
+          type: string
+        facts:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessDiscoveryFact"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessDiscoveryImage"
+      required:
+        - providerReference
+        - facts
+        - images
+
+    BusinessDiscoverySearchResult:
+      type: object
+      additionalProperties: false
+      properties:
+        provider:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessDiscoveryBusiness"
+        requestId:
+          type: string
+        quota:
+          oneOf:
+            - $ref: "#/components/schemas/ProviderQuota"
+            - type: "null"
+      required:
+        - provider
+        - items
+        - requestId
+
+    # ─── Lead Channel Consent ─────────────────────────────────────────────────
+
+    LeadChannelConsent:
+      type: object
+      additionalProperties: false
+      properties:
+        leadId:
+          type: string
+        channel:
+          type: string
+          enum: [whatsapp]
+        status:
+          type: string
+          enum: [granted, revoked, unknown]
+        source:
+          type: string
+        evidenceRef:
+          type: ["string", "null"]
+        capturedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - leadId
+        - channel
+        - status
+        - source
+        - capturedAt
+        - updatedAt
+
+    LeadWhatsAppConsentUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [granted, revoked]
+        source:
+          type: string
+          minLength: 1
+          maxLength: 64
+        evidenceRef:
+          type: ["string", "null"]
+          maxLength: 500
+      required:
+        - status
+        - source
+
+    # ─── Provider Error Types ─────────────────────────────────────────────────
+
+    RateLimitError:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        retryAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - error
+        - message
+
+    ProviderUnavailableError:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        availability:
+          $ref: "#/components/schemas/ProviderAvailability"
+      required:
+        - error
+        - message
+        - availability

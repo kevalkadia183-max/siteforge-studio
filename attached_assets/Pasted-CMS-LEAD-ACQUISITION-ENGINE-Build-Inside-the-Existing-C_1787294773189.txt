@@ -1,0 +1,1851 @@
+CMS LEAD ACQUISITION ENGINE
+
+Build Inside the Existing CMS Project — Do Not Create a Separate Codebase
+
+You are working inside the EXISTING CMS repository.
+
+I want you to add a new, professionally engineered Lead Acquisition / Website Sales Engine inside this existing project.
+
+IMPORTANT:
+
+This is NOT a request to replace, redesign, or destabilize the existing CMS.
+
+The existing CMS is the core website-building product and must continue working exactly as it currently does.
+
+The new functionality should be implemented as a separate product/module inside the same repository, with clear boundaries between:
+
+1. Existing CMS / website builder
+2. Lead Acquisition Engine
+3. Prospect website generation
+4. Outreach
+5. Lead/CRM management
+
+Do not rewrite working CMS functionality just to implement this feature.
+
+⸻
+
+1. FIRST: AUDIT THE EXISTING PROJECT
+
+Before changing anything:
+
+1. Inspect the complete existing repository.
+2. Identify:
+    * framework
+    * frontend architecture
+    * backend architecture
+    * database
+    * authentication
+    * existing CMS website-generation functionality
+    * existing website/project models
+    * existing file/image storage
+    * existing email infrastructure
+    * existing integrations
+    * existing admin functionality
+    * existing API structure
+    * existing deployment configuration
+3. Identify the safest way to integrate the Lead Acquisition Engine.
+4. Reuse existing infrastructure wherever appropriate.
+5. Do NOT create duplicate authentication, database infrastructure, CMS generation engines, or unrelated services if the project already provides them.
+
+Before implementation, produce an internal implementation plan based on the actual repository.
+
+Do not guess the architecture.
+
+⸻
+
+2. PRODUCT PURPOSE
+
+The new feature is an AI Website Sales Engine.
+
+Its purpose is:
+
+Find real businesses that do not have a proper website, analyze their online presence, qualify them as website prospects, collect permitted business information and images, generate a personalized website preview using our existing CMS, and prepare/send personalized outreach through supported email and WhatsApp Business integrations.
+
+Example:
+
+A user searches:
+
+Carpenter — Waterloo, Canada
+
+The system finds:
+
+Heidel Carpentry
+
+It discovers that the business has:
+
+* business name
+* category
+* location
+* phone
+* reviews
+* rating
+* services
+* photos
+* social/business information
+* no dedicated website
+
+The system then:
+
+1. Creates a lead.
+2. Calculates an opportunity score.
+3. Collects verified/permitted public business information.
+4. Uses the existing CMS to generate a prospect website.
+5. Creates a preview URL.
+6. Generates personalized email outreach.
+7. Generates personalized WhatsApp outreach.
+8. Allows the user to review/edit before sending.
+9. Sends through compliant supported integrations.
+10. Tracks outreach and responses.
+11. Allows conversion of the prospect into a real CMS customer.
+
+⸻
+
+3. DO NOT TURN THIS INTO A GENERIC CRM
+
+This feature is specifically for:
+
+Finding businesses that are potential customers for our website CMS.
+
+Do NOT build a generic Salesforce clone.
+
+The primary workflow is:
+
+DISCOVER BUSINESS
+→ VERIFY BUSINESS
+→ DETECT WEBSITE STATUS
+→ SCORE OPPORTUNITY
+→ GENERATE WEBSITE
+→ CREATE PREVIEW
+→ PREPARE OUTREACH
+→ CONTACT BUSINESS
+→ TRACK RESPONSE
+→ CONVERT TO CMS CUSTOMER
+
+Everything should support this workflow.
+
+⸻
+
+4. NEW NAVIGATION
+
+Add a new top-level product/module called:
+
+Lead Acquisition
+
+The existing CMS navigation must remain intact.
+
+Inside Lead Acquisition, create:
+
+* Lead Dashboard
+* Discover Leads
+* Leads
+* Website Opportunities
+* Website Previews
+* Outreach
+* Campaigns
+* Follow-ups
+* Settings
+
+Do not add unnecessary navigation items.
+
+The UI must be mobile-friendly because this system will frequently be used from phones.
+
+⸻
+
+5. LEAD DASHBOARD
+
+Create a dashboard showing:
+
+Main metrics
+
+* Total leads
+* New leads
+* Qualified leads
+* High-opportunity leads
+* Websites generated
+* Outreach sent
+* Emails delivered
+* WhatsApp messages sent
+* Replies
+* Interested leads
+* Customers won
+* Conversion rate
+
+Opportunity pipeline
+
+Show:
+
+NEW
+→ QUALIFIED
+→ WEBSITE GENERATED
+→ CONTACTED
+→ REPLIED
+→ INTERESTED
+→ DEMO
+→ WON
+→ LOST
+
+Allow filtering by:
+
+* country
+* city
+* category
+* opportunity score
+* website status
+* outreach status
+* lead status
+
+⸻
+
+6. BUSINESS DISCOVERY
+
+Create a Discover Leads screen.
+
+Inputs:
+
+Business category
+
+Example:
+
+* Carpenter
+* Plumber
+* Electrician
+* Dentist
+* Restaurant
+* Salon
+* Roofer
+* Contractor
+* Lawyer
+* Photographer
+* Real estate agent
+* Mechanic
+* Cleaning company
+* etc.
+
+Allow custom categories.
+
+Location
+
+Allow:
+
+* country
+* state/province/region
+* city
+* postal/ZIP area where supported
+
+Examples:
+
+Carpenter + Waterloo, Canada
+
+Plumber + Texas, USA
+
+Dentist + London, UK
+
+Restaurant + Dubai, UAE
+
+Number of businesses
+
+Allow a configurable limit.
+
+Website filter
+
+Options:
+
+* No website
+* Website appears broken
+* Poor/outdated website
+* Mobile-unfriendly website
+* Any website status
+
+Minimum opportunity score
+
+Allow:
+
+* Any
+* 50+
+* 70+
+* 80+
+* 90+
+
+⸻
+
+7. BUSINESS DATA PROVIDER ARCHITECTURE
+
+Do NOT hard-code the application to a single scraping method.
+
+Create a provider abstraction.
+
+For example:
+
+BusinessDiscoveryProvider
+
+WebsiteDetectionProvider
+
+BusinessDataProvider
+
+ContactDiscoveryProvider
+
+ImageProvider
+
+EmailProvider
+
+WhatsAppProvider
+
+This allows providers to be added/replaced later.
+
+IMPORTANT:
+
+Do not implement unauthorized scraping, bypass CAPTCHA, bypass rate limits, circumvent access controls, or use methods that violate a provider’s terms.
+
+Use legitimate APIs/data providers wherever possible.
+
+If a provider is not configured, the UI should clearly show:
+
+Provider not configured
+
+instead of pretending that discovery is working.
+
+⸻
+
+8. BUSINESS RECORD
+
+Create a proper Lead/Business model.
+
+Store information such as:
+
+* business ID
+* business name
+* category
+* description
+* country
+* state/province
+* city
+* postal code
+* address
+* latitude/longitude when legally/appropriately available
+* phone
+* email
+* website URL
+* social URLs
+* business listing URL
+* rating
+* review count
+* business hours
+* services
+* source/provider
+* source ID
+* source URL
+* discovered timestamp
+* last verified timestamp
+
+Do not store information that is not actually available.
+
+Clearly distinguish:
+
+VERIFIED
+
+INFERRED
+
+AI-GENERATED
+
+USER-PROVIDED
+
+⸻
+
+9. WEBSITE DETECTION
+
+This is one of the most important components.
+
+Do NOT simply check whether a URL exists.
+
+Classify the business into:
+
+NO WEBSITE
+
+No dedicated business website detected.
+
+BROKEN WEBSITE
+
+Website exists but is unavailable/broken.
+
+POOR WEBSITE
+
+Website exists but has serious issues.
+
+MOBILE PROBLEMS
+
+Website has significant mobile usability problems.
+
+OUTDATED
+
+Website appears old/outdated.
+
+GOOD WEBSITE
+
+Website appears to provide a reasonable current business presence.
+
+UNKNOWN
+
+Unable to determine reliably.
+
+Never tell the user that a business has “no website” unless the system has reasonable evidence.
+
+⸻
+
+10. WEBSITE QUALITY ANALYSIS
+
+For existing websites, analyze where technically and legally appropriate:
+
+* accessibility
+* mobile responsiveness
+* HTTPS
+* page availability
+* basic performance
+* contact information
+* CTA availability
+* service information
+* booking/contact options
+* basic SEO signals
+* obvious broken pages
+* outdated content indicators
+
+Create a:
+
+Website Opportunity Score
+
+Example:
+
+0–39 = Low
+
+40–59 = Medium
+
+60–74 = Good
+
+75–89 = High
+
+90–100 = Very High
+
+Make the scoring system configurable.
+
+⸻
+
+11. OPPORTUNITY SCORING
+
+The score should consider signals such as:
+
+Strong positive signals
+
+* no website
+* broken website
+* poor website
+* mobile problems
+* high review count
+* strong rating
+* active business
+* public contact method
+* strong service offering
+* good business photos
+* active social presence
+
+Example:
+
+No website = strong positive signal.
+
+5-star rating + many reviews + no website = very strong opportunity.
+
+Good website = strong negative signal.
+
+Do NOT artificially inflate scores.
+
+Show the reason for the score.
+
+Example:
+
+Opportunity Score: 94
+
+Reasons:
+
+* No dedicated website detected
+* 5.0 rating
+* 15 reviews
+* Multiple project photos available
+* Clearly defined services
+* Public phone number available
+
+⸻
+
+12. LEAD DETAIL PAGE
+
+Create a professional lead page.
+
+Example:
+
+Heidel Carpentry
+
+Carpenter
+
+Waterloo, Canada
+
+Business information
+
+Rating: 5.0
+
+Reviews: 15
+
+Phone: +1 519-500-5180
+
+Website: Not detected
+
+Services
+
+Custom carpentry services
+
+Custom wardrobe design
+
+Other verified services
+
+Online presence
+
+Google/business listing
+
+Social profiles if available
+
+Website status
+
+Opportunity
+
+HIGH
+
+Score:
+
+94/100
+
+Why this is a lead
+
+Show human-readable reasoning.
+
+⸻
+
+13. BUSINESS PHOTOS
+
+Where permitted by the data source/provider, collect publicly available business images that can legally be used for the prospect preview.
+
+IMPORTANT:
+
+Do not blindly copy copyrighted images from arbitrary websites.
+
+Store:
+
+* image source
+* source URL
+* provider
+* attribution/license information where applicable
+* whether image is approved for preview use
+
+If licensing/use rights are uncertain, do not automatically use the image in the generated website.
+
+Provide an option to:
+
+Request business images
+
+or
+
+Upload replacement images
+
+The system should never represent third-party images as our own.
+
+⸻
+
+14. PROSPECT WEBSITE GENERATION
+
+THIS IS THE MOST IMPORTANT CMS INTEGRATION.
+
+Do NOT build another website builder.
+
+Use the EXISTING CMS website-generation system.
+
+Create a new concept:
+
+Prospect Website
+
+A prospect website is a temporary/draft CMS website generated specifically for a sales lead.
+
+Example:
+
+Lead:
+
+Heidel Carpentry
+
+↓
+
+Generate Prospect Website
+
+↓
+
+Existing CMS creates website
+
+↓
+
+Preview:
+
+preview.yourdomain.com/heidel-carpentry
+
+The prospect website should be a normal CMS project/site internally, but marked with:
+
+type = prospect
+
+or an equivalent existing architecture.
+
+Do not interfere with normal customer websites.
+
+⸻
+
+15. PROSPECT WEBSITE CONTENT RULES
+
+The AI may organize and improve presentation.
+
+But it must NOT invent factual information.
+
+Allowed:
+
+* professionally written headings based on verified services
+* layout improvements
+* CTA suggestions
+* service descriptions based on verified information
+* generic marketing language clearly derived from facts
+
+Not allowed:
+
+* inventing certifications
+* inventing years in business
+* inventing guarantees
+* inventing prices
+* inventing employees
+* inventing addresses
+* inventing awards
+* inventing customer testimonials
+* inventing project claims
+
+If information is unavailable, omit it.
+
+⸻
+
+16. WEBSITE STRUCTURE
+
+For most prospect websites, generate an appropriate structure such as:
+
+Home
+
+Hero
+
+Business name
+
+Service category
+
+Location
+
+CTA
+
+About
+
+Only factual information available.
+
+Services
+
+Verified services.
+
+Work / Gallery
+
+Approved images.
+
+Why Choose Us
+
+Only factual/defensible claims.
+
+Contact
+
+Available contact information.
+
+Location
+
+When appropriate.
+
+The system should choose the structure based on business category.
+
+Do not force every business into the exact same template.
+
+⸻
+
+17. PROSPECT PREVIEW
+
+Every generated website must receive a unique preview URL.
+
+Example:
+
+preview.yourdomain.com/heidel-carpentry
+
+The preview must:
+
+* work on mobile
+* work on desktop
+* be shareable
+* clearly function as a prospect preview
+* not accidentally become a permanent customer website
+* have expiration/status controls
+* be associated with the lead
+
+Provide:
+
+Generate Preview
+
+Open Preview
+
+Copy Preview Link
+
+Regenerate
+
+Edit in CMS
+
+Convert to Customer
+
+⸻
+
+18. PREVIEW STATUS
+
+Support:
+
+* Draft
+* Generated
+* Published Preview
+* Expired
+* Converted
+* Archived
+
+A prospect preview must never automatically become a paid customer website.
+
+⸻
+
+19. “GENERATE WEBSITE” BUTTON
+
+On every qualified lead provide:
+
+Generate Website
+
+When clicked:
+
+1. Gather verified lead data.
+2. Gather approved images.
+3. Select appropriate CMS template/design.
+4. Generate content.
+5. Create CMS prospect project.
+6. Populate the website.
+7. Generate preview.
+8. Save preview URL.
+9. Return to lead page.
+
+Show progress:
+
+Researching business…
+
+Preparing content…
+
+Preparing images…
+
+Creating website…
+
+Publishing preview…
+
+Preview ready.
+
+⸻
+
+20. OUTREACH
+
+Create an Outreach section on each lead.
+
+Two primary channels:
+
+Email
+
+WhatsApp Business
+
+Do not implement personal-account WhatsApp automation.
+
+Use an official/approved WhatsApp Business messaging integration.
+
+If credentials are missing:
+
+WhatsApp provider not configured.
+
+Do not fake successful sending.
+
+⸻
+
+21. EMAIL GENERATION
+
+AI should generate personalized outreach using verified lead information.
+
+It should reference relevant facts.
+
+Example logic:
+
+Business has:
+
+5.0 rating
+
+15 reviews
+
+No website
+
+Project photos
+
+Carpentry services
+
+Then the message can naturally mention those facts.
+
+Do not produce generic spam.
+
+Provide:
+
+Generate Email
+
+Edit
+
+Preview
+
+Send
+
+⸻
+
+22. WHATSAPP GENERATION
+
+Create a shorter personalized message.
+
+Example style:
+
+Hi Heidel Carpentry,
+
+I came across your business while looking for carpentry services in Waterloo. I noticed your strong 5-star rating and project photos, but couldn’t find a dedicated website for the business.
+
+We created a quick website concept for you:
+
+[Preview Link]
+
+Would you like to take a look?
+
+Do not claim that the recipient requested the message.
+
+Do not make deceptive claims.
+
+Use appropriate WhatsApp Business templates/requirements where applicable.
+
+⸻
+
+23. OUTREACH REVIEW REQUIREMENT
+
+For the MVP, require human review before first-contact messages are sent.
+
+The user should see:
+
+Email
+
+[editable message]
+
+WhatsApp
+
+[editable message]
+
+Buttons:
+
+Cancel
+
+Save Draft
+
+Send Email
+
+Send WhatsApp
+
+Send Both
+
+Do not automatically blast newly discovered businesses.
+
+Build automation controls later.
+
+⸻
+
+24. CAMPAIGNS
+
+Create campaigns.
+
+Example:
+
+Waterloo Carpenter Campaign
+
+Category:
+
+Carpenter
+
+Location:
+
+Waterloo, Canada
+
+Lead limit:
+
+100
+
+Minimum score:
+
+75
+
+Channels:
+
+Email + WhatsApp
+
+Status:
+
+Draft / Active / Paused / Completed
+
+Show campaign statistics.
+
+⸻
+
+25. FOLLOW-UP ENGINE
+
+Support configurable follow-ups.
+
+Example:
+
+Initial contact
+
+↓
+
+No response after X days
+
+↓
+
+Follow-up #1
+
+↓
+
+No response
+
+↓
+
+Follow-up #2
+
+Stop after configured number of attempts.
+
+IMPORTANT:
+
+If the lead replies or opts out:
+
+STOP FUTURE OUTREACH.
+
+Never continue contacting an opted-out lead.
+
+⸻
+
+26. COMPLIANCE / SAFETY
+
+Build a dedicated compliance layer.
+
+The application must:
+
+* respect applicable anti-spam laws
+* respect applicable privacy rules
+* support unsubscribe/opt-out
+* maintain suppression lists
+* stop outreach after opt-out
+* respect provider policies
+* use official messaging APIs
+* avoid deceptive messages
+* avoid unauthorized scraping
+* avoid CAPTCHA bypass
+* avoid rate-limit bypass
+* maintain audit logs
+
+Create:
+
+Suppression List
+
+A lead can be marked:
+
+Do Not Contact
+
+All future outreach must be blocked.
+
+⸻
+
+27. OUTREACH STATUS
+
+Track:
+
+* Draft
+* Queued
+* Sent
+* Delivered
+* Failed
+* Opened where supported
+* Clicked where supported
+* Replied
+* Opted Out
+* Bounced
+
+Do not fabricate statuses if the provider does not expose them.
+
+⸻
+
+28. LEAD CRM
+
+Keep the CRM simple.
+
+Statuses:
+
+New
+
+Qualified
+
+Website Generated
+
+Contacted
+
+Replied
+
+Interested
+
+Demo
+
+Negotiation
+
+Won
+
+Lost
+
+Do Not Contact
+
+Allow manual status changes.
+
+⸻
+
+29. CONVERT TO CMS CUSTOMER
+
+This is another critical integration.
+
+When a prospect says YES:
+
+Button:
+
+Convert to Customer
+
+The system should:
+
+1. Preserve the prospect website.
+2. Convert it to a normal CMS project/site.
+3. Remove prospect-only restrictions.
+4. Preserve content/images/settings where appropriate.
+5. Associate it with the customer account.
+6. Preserve lead history.
+7. Mark the lead as WON.
+
+Do not duplicate the website unnecessarily.
+
+⸻
+
+30. DUPLICATE DETECTION
+
+Do not create duplicate leads for the same business.
+
+Use combinations such as:
+
+* provider ID
+* normalized business name
+* phone
+* website
+* address/location
+
+If a business already exists:
+
+Existing lead found.
+
+Allow:
+
+View existing lead
+
+Update information
+
+Ignore
+
+⸻
+
+31. DATA REFRESH
+
+Allow:
+
+Refresh Business Data
+
+The system should re-check available information and update:
+
+* website
+* phone
+* rating
+* reviews
+* services
+* business status
+* social presence
+
+Keep an audit/history of important changes.
+
+⸻
+
+32. SETTINGS
+
+Create:
+
+Lead Acquisition Settings
+
+Business Data
+
+Provider configuration
+
+Website Analysis
+
+Analysis configuration
+
+CMS
+
+Default prospect template
+
+Preview domain
+
+Preview expiration
+
+AI
+
+AI provider
+
+Model
+
+Generation settings
+
+Email
+
+Provider
+
+Sender
+
+Reply-to
+
+Daily limits
+
+WhatsApp
+
+Business provider
+
+Business number
+
+Templates
+
+Outreach
+
+Default follow-up settings
+
+Compliance
+
+Unsubscribe settings
+
+Suppression settings
+
+Contact rules
+
+⸻
+
+33. DATABASE DESIGN
+
+Use the project’s existing database conventions.
+
+Do not create unnecessary duplicate tables.
+
+Create appropriate models/entities for concepts such as:
+
+Lead
+
+Business
+
+BusinessSource
+
+WebsiteAnalysis
+
+OpportunityScore
+
+ProspectWebsite
+
+LeadImage
+
+OutreachMessage
+
+OutreachCampaign
+
+FollowUp
+
+LeadActivity
+
+SuppressionEntry
+
+ProviderConfiguration
+
+Use foreign keys and indexes appropriately.
+
+Follow the existing project’s naming and migration conventions.
+
+⸻
+
+34. AUDIT LOG
+
+Record important actions:
+
+* Lead discovered
+* Lead updated
+* Website checked
+* Website generated
+* Website regenerated
+* Preview published
+* Email generated
+* Email sent
+* WhatsApp generated
+* WhatsApp sent
+* Reply received
+* Lead status changed
+* Lead converted
+* Lead opted out
+
+This will be important for debugging and compliance.
+
+⸻
+
+35. UI/UX
+
+The interface must be:
+
+* clean
+* fast
+* mobile-first
+* responsive
+* simple
+* professional
+
+Avoid huge forms.
+
+Use tabs, cards, filters, drawers and modals where appropriate.
+
+A lead should be understandable at a glance.
+
+Example:
+
+⸻
+
+HEIDEL CARPENTRY
+
+Carpenter · Waterloo, Canada
+
+⭐ 5.0 · 15 reviews
+
+🌐 No website detected
+
+🔥 Opportunity 94/100
+
+📞 +1 519-500-5180
+
+[Generate Website]
+
+[View Preview]
+
+[Email]
+
+[WhatsApp]
+
+⸻
+
+36. BULK ACTIONS
+
+Eventually support:
+
+Select 10 leads
+
+↓
+
+Generate websites
+
+or
+
+Select leads
+
+↓
+
+Generate outreach
+
+or
+
+Select leads
+
+↓
+
+Add to campaign
+
+BUT:
+
+Do not automatically send bulk outreach without explicit user action and configured limits.
+
+⸻
+
+37. SEARCH AND FILTERS
+
+Leads should be searchable by:
+
+* name
+* category
+* location
+* phone
+* email
+* website
+* score
+* status
+
+Filters:
+
+No website
+
+Broken website
+
+Poor website
+
+High opportunity
+
+Website generated
+
+Not contacted
+
+Interested
+
+Won
+
+Do Not Contact
+
+⸻
+
+38. AI REQUIREMENTS
+
+AI should be used for:
+
+* business summarization
+* opportunity reasoning
+* website content generation
+* design/template recommendation
+* email personalization
+* WhatsApp personalization
+* lead prioritization assistance
+
+AI must not be treated as the source of truth for factual business data.
+
+Source data remains authoritative.
+
+⸻
+
+39. PROVIDER ABSTRACTION
+
+Do not hard-code OpenAI only.
+
+The project should support the existing AI provider architecture if one already exists.
+
+The same principle should apply to:
+
+* business discovery
+* email
+* WhatsApp
+* image sources
+
+Build adapters/interfaces so providers can be swapped.
+
+⸻
+
+40. IMPORTANT: USE EXISTING CMS CAPABILITIES
+
+Before implementing any website generation functionality:
+
+Search the repository for existing:
+
+* project creation
+* template system
+* page generation
+* AI content generation
+* image handling
+* publishing
+* domains
+* preview URLs
+* authentication
+* customer conversion
+
+Reuse these systems.
+
+Do not build a second website builder.
+
+⸻
+
+41. DO NOT BREAK EXISTING FEATURES
+
+This feature must not break:
+
+* existing CMS projects
+* website editing
+* publishing
+* authentication
+* billing
+* existing users
+* existing deployments
+* existing APIs
+* existing integrations
+
+Do not modify unrelated code unless required.
+
+⸻
+
+42. FEATURE FLAGS
+
+Implement the Lead Acquisition Engine behind a feature flag if the current architecture supports feature flags.
+
+Example:
+
+LEAD_ACQUISITION_ENABLED
+
+This allows the feature to be enabled safely after testing.
+
+⸻
+
+43. DEVELOPMENT ORDER
+
+Implement in this order:
+
+Phase 1
+
+Architecture
+
+Database models
+
+Navigation
+
+Lead dashboard
+
+Lead discovery abstraction
+
+Manual lead creation/import
+
+Lead detail page
+
+Website detection
+
+Opportunity scoring
+
+Phase 2
+
+CMS integration
+
+Prospect website generation
+
+Preview URLs
+
+Website editing
+
+Convert prospect to customer
+
+Phase 3
+
+Email integration
+
+Email generation
+
+Email review/send
+
+Tracking
+
+Phase 4
+
+WhatsApp Business integration
+
+Message generation
+
+Template handling
+
+Send/tracking
+
+Phase 5
+
+Campaigns
+
+Follow-ups
+
+Suppression lists
+
+Automation
+
+Phase 6
+
+Bulk discovery
+
+Advanced scoring
+
+Provider expansion
+
+Analytics
+
+Do not try to implement everything as one giant untested change.
+
+⸻
+
+44. MVP MUST ACTUALLY WORK
+
+Do not create placeholder buttons that appear functional but do nothing.
+
+If an external provider is not configured:
+
+Show the real configuration requirement.
+
+Example:
+
+Business discovery provider not configured.
+
+Do NOT return fake businesses.
+
+Do NOT fake:
+
+* emails
+* WhatsApp delivery
+* website analysis
+* provider responses
+* delivery status
+
+⸻
+
+45. TESTING
+
+Create automated tests for:
+
+Lead
+
+* creation
+* update
+* duplicate detection
+* deletion/archive
+
+Website detection
+
+* no website
+* working website
+* broken website
+* unknown
+
+Scoring
+
+* score calculation
+* score boundaries
+* explanation generation
+
+Prospect websites
+
+* generation
+* preview URL
+* regeneration
+* conversion
+
+Outreach
+
+* email generation
+* WhatsApp generation
+* sending
+* provider failure
+* opt-out blocking
+
+Campaigns
+
+* lead selection
+* campaign creation
+* follow-up
+* stopping after reply
+* stopping after opt-out
+
+Security
+
+Verify that one user cannot access another user’s leads or prospect websites unless the existing project’s authorization model explicitly permits it.
+
+⸻
+
+46. SECURITY
+
+All Lead Acquisition data must respect the existing authentication and authorization system.
+
+A user must never be able to access:
+
+* another user’s leads
+* another user’s campaigns
+* another user’s prospect websites
+* another user’s outreach history
+* another user’s provider credentials
+
+Never expose API keys to the browser.
+
+Use server-side secrets/environment variables according to the existing project architecture.
+
+⸻
+
+47. IMPORTANT EXAMPLE
+
+Use this conceptual example while developing:
+
+Business:
+
+Heidel Carpentry
+
+Category:
+
+Carpenter
+
+Location:
+
+Waterloo, Canada
+
+Rating:
+
+5.0
+
+Reviews:
+
+15
+
+Phone:
+
++1 519-500-5180
+
+Website:
+
+No website detected
+
+Services:
+
+Custom carpentry services
+
+Custom wardrobe design
+
+Images:
+
+Publicly available business images, subject to source/provider usage rights
+
+The expected workflow is:
+
+Find lead
+
+↓
+
+Verify data
+
+↓
+
+Detect no website
+
+↓
+
+Score opportunity
+
+↓
+
+Generate prospect website
+
+↓
+
+Create preview URL
+
+↓
+
+Generate personalized email
+
+↓
+
+Generate personalized WhatsApp message
+
+↓
+
+User reviews
+
+↓
+
+Send
+
+↓
+
+Track
+
+↓
+
+If interested → convert website into CMS customer
+
+This example is only a workflow example. Do not hard-code Heidel Carpentry into the application.
+
+⸻
+
+48. ADMIN / SYSTEM VISIBILITY
+
+Add appropriate admin visibility for:
+
+* total leads
+* provider usage
+* API errors
+* outreach errors
+* website generation failures
+* campaigns
+* conversion rate
+* generated websites
+* customer conversions
+
+Do not expose sensitive provider credentials.
+
+⸻
+
+49. NO UNNECESSARY REFACTORING
+
+This is extremely important.
+
+Do NOT:
+
+* rewrite the CMS
+* replace the existing database
+* replace authentication
+* replace the existing editor
+* replace existing AI architecture
+* change unrelated UI
+* remove existing features
+* rename unrelated components
+* migrate technologies without a clear requirement
+
+Build this feature around the current architecture.
+
+⸻
+
+50. FINAL VALIDATION
+
+After implementation:
+
+Run the existing test suite.
+
+Run all new Lead Acquisition tests.
+
+Run lint/type checking where applicable.
+
+Run build.
+
+Verify database migrations.
+
+Verify authorization.
+
+Verify existing CMS functionality.
+
+Verify:
+
+1. Create/import a lead.
+2. Analyze website status.
+3. Calculate opportunity score.
+4. Generate prospect website.
+5. Open preview.
+6. Edit prospect website.
+7. Generate email.
+8. Generate WhatsApp message.
+9. Verify send actions require proper provider configuration.
+10. Verify opt-out blocks future outreach.
+11. Convert prospect to customer.
+12. Verify converted website remains functional.
+13. Verify existing CMS projects remain unaffected.
+
+⸻
+
+51. FINAL IMPLEMENTATION REPORT
+
+When finished, provide a concise report containing:
+
+Implemented
+
+List exactly what was implemented.
+
+Existing CMS components reused
+
+List the existing systems reused.
+
+New database models
+
+List them.
+
+New APIs
+
+List them.
+
+New UI routes
+
+List them.
+
+External providers required
+
+List exactly which credentials/configuration are still required.
+
+Tests
+
+Report:
+
+* passed
+* failed
+* skipped
+
+Known limitations
+
+Be honest.
+
+Production readiness
+
+State whether the feature is:
+
+NOT READY
+
+READY FOR INTERNAL TESTING
+
+READY FOR STAGING
+
+READY FOR PRODUCTION
+
+Do not claim production readiness if provider integrations or compliance configuration are incomplete.
+
+⸻
+
+MOST IMPORTANT DEVELOPMENT PRINCIPLE
+
+Build this as a Lead Acquisition Engine integrated into the existing CMS, not as a separate generic CRM and not as another website builder.
+
+The ultimate product flow must be:
+
+FIND BUSINESS
+
+→ VERIFY BUSINESS
+
+→ FIND WEBSITE OPPORTUNITY
+
+→ SCORE LEAD
+
+→ CREATE THEIR WEBSITE WITH OUR EXISTING CMS
+
+→ CREATE SHAREABLE PREVIEW
+
+→ PERSONALIZE EMAIL + WHATSAPP
+
+→ CONTACT BUSINESS
+
+→ TRACK RESPONSE
+
+→ CONVERT TO CMS CUSTOMER
+
+The CMS remains the core website product.
+
+The Lead Acquisition Engine becomes the customer acquisition machine for that CMS.
+
+Before writing significant amounts of code, inspect the existing repository and adapt this architecture to what is actually already implemented. Do not assume any technology, table, API, provider, or component exists until you verify it.

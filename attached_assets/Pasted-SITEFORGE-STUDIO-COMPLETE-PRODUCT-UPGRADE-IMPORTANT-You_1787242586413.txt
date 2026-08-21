@@ -1,0 +1,1142 @@
+SITEFORGE STUDIO — COMPLETE PRODUCT UPGRADE
+
+IMPORTANT:
+
+You have already completed an implementation audit of the current SiteForge system.
+
+DO NOT rebuild SiteForge from scratch.
+
+DO NOT throw away working functionality.
+
+DO NOT replace the existing architecture simply because a new approach seems cleaner.
+
+Use the existing codebase and progressively upgrade it.
+
+The current system already has:
+
+* 5 working templates
+* Template-based website editor
+* Business/content editing
+* Section editing/reordering
+* Image upload and optimization
+* Responsive preview
+* Undo/redo
+* Browser autosave
+* Website creation/duplication/deletion
+* HTML/CSS/JS generation
+* ZIP export
+* Static independent website export
+* PostgreSQL
+* Express API
+* React/Vite Studio
+* OpenAI integration
+* Website AI chat foundation
+* Gmail integration
+* Gmail draft creation
+* Retell transcript synchronization
+* Receptionist policy/security layer
+* Receptionist inbox
+* Preview publishing
+
+The goal now is to evolve SiteForge into:
+
+A professional website builder + CMS + AI business employee platform.
+
+The final product concept is:
+
+BUILD A WEBSITE
++
+MANAGE THE BUSINESS
++
+GET AN AI EMPLOYEE
++
+EXPORT/OWN THE WEBSITE
+
+The AI employee should eventually work through:
+
+* Website chat
+* Phone
+* Email
+* Calendar
+* Leads/CRM
+
+Work incrementally.
+
+==================================================
+PHASE 0 — SAFETY AND BASELINE
+
+Before changing anything:
+
+1. Inspect the current repository.
+2. Inspect database schema and migrations.
+3. Inspect existing routes and APIs.
+4. Inspect Studio components.
+5. Inspect website generation/export code.
+6. Inspect existing receptionist/Gmail/Retell implementation.
+7. Run the current test suite.
+8. Run typecheck.
+9. Run production build.
+10. Record the baseline status.
+
+Create a Git/checkpoint before beginning.
+
+Do not remove existing working functionality.
+
+If something currently works, preserve backward compatibility wherever possible.
+
+==================================================
+PHASE 1 — USER ACCOUNTS AND SERVER-BACKED WEBSITES
+
+This is the highest priority foundation.
+
+Currently websites are stored primarily in browser localStorage.
+
+Replace that architecture with server-backed persistent websites.
+
+Implement:
+
+USER
+
+* id
+* email
+* name
+* password/authentication identity
+* createdAt
+* updatedAt
+
+WEBSITE
+
+* id
+* ownerId
+* name
+* slug
+* template
+* projectData
+* settings
+* status
+* createdAt
+* updatedAt
+
+Ensure every website belongs to exactly one owner.
+
+Do not allow a user to access another user’s websites.
+
+Implement:
+
+* Sign up
+* Login
+* Logout
+* Session management
+* Protected Studio
+* User-owned website list
+* Create website
+* Rename website
+* Duplicate website
+* Delete website
+* Open website
+* Save website
+* Load website
+
+The application must no longer depend on browser localStorage as the authoritative source.
+
+localStorage may be retained temporarily as a cache/draft mechanism, but PostgreSQL must become the source of truth.
+
+Implement strict server-side ownership checks.
+
+Do not rely only on frontend checks.
+
+==================================================
+PHASE 2 — REAL CMS CONTENT MODEL
+
+Create a proper content architecture.
+
+Support:
+
+PAGES
+
+* id
+* websiteId
+* title
+* slug
+* status
+* content
+* SEO data
+* createdAt
+* updatedAt
+
+POSTS
+
+* id
+* websiteId
+* title
+* slug
+* excerpt
+* content
+* featuredImage
+* status
+* publishedAt
+* SEO data
+* createdAt
+* updatedAt
+
+CATEGORIES
+
+TAGS
+
+MEDIA
+
+NAVIGATION
+
+CUSTOM CONTENT
+
+The architecture should allow future custom collections/content types.
+
+Implement:
+
+* Create page
+* Edit page
+* Delete page
+* Duplicate page
+* Page slug
+* Page status
+* Draft
+* Published
+* Scheduled publishing architecture
+* Blog posts
+* Categories
+* Tags
+* Search
+* Media metadata
+* Navigation editor
+
+Do not break the existing fixed-template websites.
+
+Existing template projects should migrate into the new architecture safely.
+
+==================================================
+PHASE 3 — REAL MEDIA LIBRARY
+
+Move away from browser-only data URLs as the long-term media architecture.
+
+Create a proper media abstraction.
+
+Support:
+
+* Upload
+* Delete
+* Replace
+* Alt text
+* Caption
+* Filename
+* MIME type
+* Size
+* Dimensions
+* Search
+* Filtering
+* Media selection
+* Website-specific media
+
+Initially the storage provider may remain local/configurable if necessary.
+
+However, design a storage abstraction so the following can later be supported:
+
+* S3-compatible storage
+* Cloudflare R2
+* Google Cloud Storage
+* Other object storage
+
+Never hard-code one storage provider into the CMS.
+
+==================================================
+PHASE 4 — UPGRADE THE EDITOR INTO A REAL WEBSITE BUILDER
+
+The current fixed-template editor must evolve into a real visual/block builder.
+
+Do NOT remove the existing templates.
+
+Keep them as starter templates.
+
+Add a block system.
+
+INITIAL BLOCKS:
+
+* Container
+* Section
+* Heading
+* Paragraph
+* Rich text
+* Image
+* Video
+* Button
+* Link
+* Divider
+* Spacer
+* Columns
+* Grid
+* Card
+* Cards grid
+* Hero
+* Testimonials
+* FAQ
+* Pricing
+* Gallery
+* Logo strip
+* Features
+* Contact form
+* Map/embed
+* Social links
+* HTML/embed
+
+Each block must have a structured JSON representation.
+
+Implement:
+
+* Add block
+* Delete block
+* Duplicate block
+* Move block
+* Drag and drop reorder
+* Nest blocks where appropriate
+* Edit block content
+* Block settings
+* Responsive settings
+* Visibility
+* Alignment
+* Width
+* Typography
+* Colors
+* Background
+* Border
+* Radius
+* Shadow
+* Margin
+* Padding
+* Gap
+* Desktop/tablet/mobile controls
+
+Do not build arbitrary CSS editing initially.
+
+Use safe structured style properties.
+
+The builder should work responsively on desktop and mobile.
+
+==================================================
+PHASE 5 — REUSABLE COMPONENTS
+
+Implement reusable sections/components.
+
+Users should be able to:
+
+* Save section
+* Name section
+* Reuse section
+* Insert saved section
+* Update reusable section
+* Delete reusable section
+
+Examples:
+
+“Contact CTA”
+“Restaurant Menu”
+“Lead Form”
+“Testimonials”
+“Footer CTA”
+
+A reusable component should be stored at website level.
+
+==================================================
+PHASE 6 — THEMES AND DESIGN SYSTEM
+
+Upgrade the current theme-token system.
+
+Support:
+
+* Brand colors
+* Background colors
+* Text colors
+* Accent colors
+* Font families
+* Heading typography
+* Body typography
+* Button styles
+* Container width
+* Border radius
+* Shadows
+* Global spacing scale
+
+Create a real Theme/Design Settings interface.
+
+Allow theme settings to affect the entire website.
+
+Do not destroy existing template styling.
+
+Template presets should become starter themes rather than hardcoded page structures.
+
+==================================================
+PHASE 7 — NAVIGATION AND TEMPLATES
+
+Implement a real navigation system.
+
+Support:
+
+* Add menu
+* Rename menu
+* Add page
+* Add custom URL
+* Nested navigation
+* Reorder items
+* Remove items
+* Header menu
+* Footer menu
+
+Create template types:
+
+* Home
+* Page
+* Blog
+* Single Post
+* Category
+* Search
+* 404
+* Contact
+* Landing page
+
+Allow content to render through templates.
+
+==================================================
+PHASE 8 — SEO
+
+Implement real SEO controls.
+
+Per page/post:
+
+* SEO title
+* Meta description
+* Canonical URL
+* Open Graph title
+* Open Graph description
+* Social image
+* Robots directives
+* Image alt text
+
+Generate:
+
+* sitemap.xml
+* robots.txt
+
+Add structured data where appropriate.
+
+Do NOT call this AI SEO yet.
+
+First make normal SEO work correctly.
+
+==================================================
+PHASE 9 — PRODUCTION PUBLISHING
+
+Improve the current expiring preview system.
+
+Keep preview functionality.
+
+Add architecture for:
+
+* Draft
+* Preview
+* Published
+* Unpublished
+
+Implement a production publishing workflow.
+
+A website should have:
+
+* Current deployment version
+* Deployment status
+* Last published time
+* Publish history
+* Republish
+* Unpublish
+
+Do not claim production publishing works unless it actually does.
+
+==================================================
+PHASE 10 — CUSTOM DOMAIN ARCHITECTURE
+
+Create domain-management architecture.
+
+Support:
+
+* Custom domain
+* Subdomain
+* Domain verification state
+* DNS instructions
+* SSL status
+* Primary domain
+
+Initially it is acceptable to provide configuration/instructions instead of automated DNS changes.
+
+Do not pretend DNS has been configured automatically.
+
+==================================================
+PHASE 11 — AI WEBSITE BUILDER
+
+After the core builder is stable, implement AI website generation.
+
+User should be able to enter:
+
+“Create a modern website for a Canadian plumbing company.”
+
+AI should generate a structured website configuration.
+
+It must generate:
+
+* Pages
+* Sections
+* Blocks
+* Text
+* Navigation
+* Theme
+* Basic SEO
+
+The AI must generate structured block JSON rather than arbitrary HTML whenever possible.
+
+The generated website must remain editable in the normal builder.
+
+Implement AI actions such as:
+
+* Generate website
+* Generate page
+* Generate section
+* Rewrite text
+* Improve headline
+* Generate CTA
+* Generate FAQ
+* Generate SEO metadata
+
+Do not allow AI-generated output to bypass security or application validation.
+
+==================================================
+PHASE 12 — AI BUSINESS EMPLOYEE
+
+This is the major differentiating product.
+
+Build ONE unified Business AI.
+
+Do not create unrelated bots.
+
+Architecture:
+
+BUSINESS AI
+|
++– Website Chat
+|
++– Phone
+|
++– Email
+|
++– Calendar
+|
++– Leads/CRM
+|
++– Business Knowledge
+|
++– Actions
+|
++– Permissions
+|
++– Audit
+
+Create a shared business knowledge layer.
+
+Knowledge should include:
+
+* Business information
+* Services
+* Pricing
+* Hours
+* Locations
+* FAQs
+* Policies
+* Website content
+* Approved facts
+* Appointment rules
+
+The AI should use the same business knowledge across channels.
+
+==================================================
+PHASE 13 — WEBSITE AI CHAT
+
+Complete the existing chat system.
+
+Keep the current safe deterministic policy.
+
+Do not weaken the existing security policy.
+
+Implement:
+
+* Conversation history
+* Visitor sessions
+* Lead capture
+* Escalation
+* Owner notification
+* Human handoff
+* Conversation resolution
+* AI response
+* Business knowledge retrieval
+
+The AI must not invent:
+
+* Prices
+* Policies
+* Availability
+* Guarantees
+* Appointments
+* Business claims
+
+Unknown requests should escalate appropriately.
+
+==================================================
+PHASE 14 — EMAIL AI
+
+Keep the existing Gmail integration.
+
+Now complete the workflow.
+
+Support:
+
+READ
+
+* Sync inbox
+* Read messages
+* Classify messages
+* Detect customer requests
+
+DRAFT
+
+* Generate reply
+* Show draft
+* Human approval
+
+SEND
+
+* Only when explicitly authorized by the business
+
+Create permissions:
+
+can_read_email
+can_draft_email
+can_send_email
+
+Default:
+
+can_read_email = true
+can_draft_email = true
+can_send_email = false
+
+The business owner must explicitly enable automatic sending.
+
+Support appointment requests detected through email.
+
+Do not send email automatically unless permission is enabled.
+
+==================================================
+PHASE 15 — CALENDAR
+
+Implement calendar integration.
+
+Start with Google Calendar.
+
+Support:
+
+* OAuth
+* Calendar selection
+* Availability
+* Business hours
+* Appointment duration
+* Buffer time
+* Timezone
+* Staff/resource availability
+
+AI actions:
+
+check_availability
+offer_times
+book_appointment
+reschedule_appointment
+cancel_appointment
+
+Every action must be permission controlled.
+
+Default to human confirmation for sensitive actions until fully tested.
+
+==================================================
+PHASE 16 — AI PHONE ASSISTANT
+
+Retell AI may be used as the initial voice provider.
+
+However:
+
+Retell must NOT become the entire AI architecture.
+
+Create a voice-provider abstraction.
+
+Support:
+
+* Incoming calls
+* Caller identification where available
+* Business knowledge
+* FAQs
+* Lead capture
+* Appointment requests
+* Transfer to human
+* Take message
+* Call transcript
+* Call summary
+* Escalation
+
+CRITICAL:
+
+The same Business AI policy/permission system must apply to phone interactions.
+
+Do not allow the voice model to bypass the safe action policy.
+
+If the current Retell implementation cannot enforce this securely, do not enable live phone actions.
+
+Keep transcript synchronization working.
+
+==================================================
+PHASE 17 — LEADS / CRM
+
+Create a basic CRM.
+
+Entities:
+
+CONTACT
+
+* id
+* websiteId
+* name
+* email
+* phone
+* source
+* notes
+* createdAt
+
+LEAD
+
+* id
+* contactId
+* status
+* source
+* value
+* owner
+* notes
+* createdAt
+* updatedAt
+
+Initial stages:
+
+New
+Qualified
+Contacted
+Booked
+Won
+Lost
+
+AI should be able to create a lead when permitted.
+
+Do not create a complex CRM initially.
+
+==================================================
+PHASE 18 — HUMAN HANDOFF
+
+Complete the existing escalation workflow.
+
+When AI escalates:
+
+Owner should see:
+
+* Conversation
+* Customer
+* Reason
+* AI context
+* Channel
+* Time
+* Suggested response
+
+Owner should be able to reply.
+
+For website chat, the reply must actually reach the visitor.
+
+Support:
+
+* Open escalation
+* Reply
+* Resolve
+* Reopen
+* Assign
+* Internal note
+
+==================================================
+PHASE 19 — AUDIT LOGGING
+
+Create a proper audit viewer.
+
+Track:
+
+* AI action
+* User action
+* Email read
+* Email draft
+* Email sent
+* Calendar lookup
+* Appointment creation
+* Call
+* Transfer
+* Escalation
+* Human approval
+* Configuration change
+
+Every event should include:
+
+* timestamp
+* actor
+* website
+* action
+* result
+* relevant resource ID
+
+Do not expose sensitive secrets.
+
+==================================================
+PHASE 20 — ANALYTICS
+
+Create a basic business dashboard.
+
+Metrics:
+
+* Website visitors
+* Chat conversations
+* Leads
+* Emails handled
+* Calls
+* Appointments
+* Escalations
+* AI actions
+* Conversion rate where data permits
+
+Do not fabricate analytics.
+
+Only show real measured data.
+
+==================================================
+PHASE 21 — EXPORT
+
+Preserve the current static ZIP export.
+
+Improve it.
+
+Static export must contain:
+
+* HTML
+* CSS
+* JavaScript
+* Assets
+* SEO metadata
+* Sitemap/robots where applicable
+
+Make sure static websites work without SiteForge.
+
+Do NOT make Retell/Gmail/OpenAI dependencies mandatory for static export.
+
+If the customer enables AI features, clearly separate the optional backend requirements.
+
+==================================================
+PHASE 22 — GITHUB EXPORT
+
+Implement optional GitHub export.
+
+User should be able to:
+
+* Connect GitHub
+* Select/create repository
+* Export website
+* Push updates
+* View last exported commit
+
+Do not overwrite unrelated repository files.
+
+==================================================
+PHASE 23 — SELF-HOSTING
+
+First-class static self-hosting:
+
+The exported website must run on:
+
+* Nginx
+* Apache
+* Cloudflare Pages
+* Netlify
+* Vercel
+* Any normal static hosting provider
+
+Do not require SiteForge.
+
+Later architecture may support full self-hosted CMS.
+
+Do NOT attempt full CMS self-hosting until the static export is stable.
+
+==================================================
+PHASE 24 — DOCKER
+
+Only after the application architecture is stable, add Docker support where appropriate.
+
+Do not create a fake Docker configuration that cannot actually deploy.
+
+Provide:
+
+* Dockerfile
+* docker-compose.yml
+* environment example
+* setup instructions
+
+Only mark this complete after testing the generated configuration.
+
+==================================================
+PHASE 25 — TESTING
+
+Expand testing significantly.
+
+Add tests for:
+
+* Authentication
+* Website ownership
+* Website isolation
+* Website persistence
+* Page CRUD
+* Post CRUD
+* Media
+* Builder serialization
+* Builder rendering
+* Export
+* ZIP integrity
+* Preview
+* SEO generation
+* Gmail
+* AI chat
+* AI policy
+* Human handoff
+* Calendar
+* Appointment actions
+* Retell synchronization
+* CRM
+* Permissions
+* Audit logs
+
+Add integration tests for important API routes.
+
+Do not consider a feature “fully working” merely because the UI renders.
+
+==================================================
+PHASE 26 — MOBILE UX
+
+Ensure the entire Studio works well on mobile.
+
+Test:
+
+* Dashboard
+* Website selection
+* Editor
+* Block settings
+* Media
+* CMS
+* AI inbox
+* Email
+* Leads
+* Settings
+
+Avoid horizontal overflow.
+
+Make block editing usable on small screens.
+
+==================================================
+PHASE 27 — FINAL SECURITY REVIEW
+
+Before declaring production readiness:
+
+Check:
+
+* Authentication
+* Authorization
+* Tenant isolation
+* Website ownership
+* API authorization
+* Secret exposure
+* XSS
+* CSRF where applicable
+* SQL injection protection
+* Rate limiting
+* File upload validation
+* MIME validation
+* Path traversal
+* SSRF
+* Prompt injection
+* AI action authorization
+* Email sending authorization
+* Calendar action authorization
+* Phone action authorization
+
+Never allow an AI model to directly decide whether it has permission to perform an action.
+
+The server must enforce permissions.
+
+==================================================
+IMPLEMENTATION RULES
+
+1. Do not rewrite working systems unnecessarily.
+2. Do not remove the existing templates.
+3. Do not remove existing ZIP export.
+4. Do not weaken receptionist safety policies.
+5. Do not expose secrets to frontend code.
+6. Do not use browser localStorage as the authoritative database after Phase 1.
+7. Do not claim a feature is complete until it has been tested end-to-end.
+8. Do not create UI-only placeholders and mark them as working.
+9. Do not silently change existing product behavior.
+10. Use database migrations for schema changes.
+11. Create backups/checkpoints before major migrations.
+12. Keep Git as the source of truth.
+13. Run typecheck/build/tests after each major phase.
+14. If a migration could destroy existing data, STOP and explain the migration strategy before executing it.
+15. Preserve existing functionality during migrations.
+
+==================================================
+EXECUTION ORDER
+
+Do NOT attempt all phases simultaneously.
+
+Execute in this order:
+
+PHASE GROUP A
+
+1. User accounts
+2. Website ownership
+3. PostgreSQL website persistence
+4. Website isolation
+
+STOP AND TEST.
+
+PHASE GROUP B
+5. CMS pages/posts
+6. Media library
+7. Navigation
+8. Themes/templates
+
+STOP AND TEST.
+
+PHASE GROUP C
+9. Real block editor
+10. Drag/drop
+11. Styling
+12. Reusable components
+13. Responsive editing
+
+STOP AND TEST.
+
+PHASE GROUP D
+14. SEO
+15. Production publishing
+16. Domains
+
+STOP AND TEST.
+
+PHASE GROUP E
+17. AI website generation
+18. AI content tools
+19. AI builder assistant
+
+STOP AND TEST.
+
+PHASE GROUP F
+20. Unified Business AI
+21. Website chat
+22. Gmail
+23. Calendar
+24. Retell phone
+25. Human handoff
+26. CRM
+
+STOP AND TEST.
+
+PHASE GROUP G
+27. Analytics
+28. Audit viewer
+29. GitHub export
+30. Improved self-hosting
+31. Docker
+
+STOP AND TEST.
+
+PHASE GROUP H
+32. Full security review
+33. Full automated testing
+34. Mobile QA
+35. Production readiness review
+
+==================================================
+CHECKPOINT REQUIREMENT
+
+After every PHASE GROUP:
+
+1. Run tests.
+2. Run typecheck.
+3. Run production build.
+4. Verify existing features.
+5. Create a checkpoint.
+6. Report exactly what changed.
+7. Report what is working.
+8. Report what remains.
+9. Do not continue to the next group if the current group has critical failures.
+
+==================================================
+FINAL PRODUCT GOAL
+
+SiteForge should eventually provide:
+
+CREATE
+→ Build a professional website visually.
+
+MANAGE
+→ Manage pages, posts, media, SEO and business content.
+
+PUBLISH
+→ Publish to a domain.
+
+OWN
+→ Export the website and run it independently.
+
+AI EMPLOYEE
+→ Give every business an AI employee that can:
+
+* Talk to website visitors
+* Answer customer questions
+* Read business emails
+* Draft/reply to emails according to permissions
+* Answer phone calls
+* Qualify leads
+* Take messages
+* Check calendars
+* Book appointments
+* Reschedule appointments
+* Capture leads
+* Escalate to humans
+* Maintain conversation context
+
+The key product principle is:
+
+ONE BUSINESS + ONE BUSINESS AI + MULTIPLE CHANNELS
+
+Do not turn SiteForge into a collection of unrelated AI tools.
+
+Build a unified platform.
+
+START WITH PHASE GROUP A ONLY.
+
+Do not begin Phase Group B until Group A has been tested and checkpointed.
